@@ -1,0 +1,1526 @@
+{
+    "data": null,
+    "error": null,
+    "openapi": "3.0.0",
+    "title": "Altinity Cloud Manager API",
+    "description": "API Reference for Altinity Cloud Manager",
+    "version": "25.7.34",
+    "servers": [
+        {
+            "url": "https://acm.altinity.cloud/api/",
+            "description": "General API Endpoint"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-Auth-Token"
+            }
+        },
+        "schemas": {
+            "Organization": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "companyName": {
+                        "type": "string"
+                    },
+                    "emailDomain": {
+                        "type": "string"
+                    },
+                    "inheritEnvironment": {
+                        "type": "boolean"
+                    },
+                    "opened": {
+                        "type": "boolean"
+                    },
+                    "limited": {
+                        "type": "boolean"
+                    },
+                    "blocked": {
+                        "type": "boolean"
+                    },
+                    "blockedPassword": {
+                        "type": "boolean"
+                    },
+                    "blockedAPI": {
+                        "type": "boolean"
+                    },
+                    "allowAdminPassword": {
+                        "type": "boolean"
+                    },
+                    "enable2FA": {
+                        "type": "boolean"
+                    },
+                    "trialExpiry": {
+                        "type": "string"
+                    },
+                    "trialExpiryToBeSet": {
+                        "type": "boolean"
+                    },
+                    "supportPlan": {
+                        "type": "string"
+                    },
+                    "autoCharge": {
+                        "type": "boolean"
+                    },
+                    "autoChargeNoLimit": {
+                        "type": "boolean"
+                    },
+                    "oktaSettings": {
+                        "type": "object"
+                    },
+                    "userSyncSettings": {
+                        "type": "object"
+                    },
+                    "quotas": {
+                        "type": "object"
+                    }
+                }
+            },
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "token": {
+                        "type": "string"
+                    },
+                    "tokenExpiry": {
+                        "type": "string"
+                    },
+                    "origins": {
+                        "type": "string"
+                    },
+                    "blocked": {
+                        "type": "boolean"
+                    },
+                    "darkTheme": {
+                        "type": "boolean"
+                    },
+                    "lastLogin": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserRole": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "rights": {
+                        "type": "object"
+                    }
+                }
+            },
+            "Environment": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "normalizedName": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "created": {
+                        "type": "string"
+                    },
+                    "updatedAtBackend": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "domain": {
+                        "type": "string"
+                    },
+                    "externalDNS": {
+                        "type": "integer"
+                    },
+                    "sslCertificateARN": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "sniProxyForCH": {
+                        "type": "boolean"
+                    },
+                    "managed": {
+                        "type": "boolean"
+                    },
+                    "remote": {
+                        "type": "boolean"
+                    },
+                    "hostedByAltinity": {
+                        "type": "boolean"
+                    },
+                    "userAgent": {
+                        "type": "string"
+                    },
+                    "autoPush": {
+                        "type": "integer"
+                    },
+                    "autoZkPush": {
+                        "type": "integer"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "pass": {
+                        "type": "string"
+                    },
+                    "awsKey": {
+                        "type": "string"
+                    },
+                    "awsSecretKey": {
+                        "type": "string"
+                    },
+                    "awsKeyPairName": {
+                        "type": "string"
+                    },
+                    "awsPrivateKey": {
+                        "type": "string"
+                    },
+                    "awsSettings": {
+                        "type": "string"
+                    },
+                    "awsSettingsAuto": {
+                        "type": "boolean"
+                    },
+                    "kubeCheck": {
+                        "type": "string"
+                    },
+                    "kubeCHOVersion": {
+                        "type": "string"
+                    },
+                    "kubeNamespace": {
+                        "type": "string"
+                    },
+                    "kubeNamespaceManage": {
+                        "type": "boolean"
+                    },
+                    "kubeAPIUrl": {
+                        "type": "string"
+                    },
+                    "kubeToken": {
+                        "type": "string"
+                    },
+                    "kubeAuthOptions": {
+                        "type": "object"
+                    },
+                    "kubeCanUninstall": {
+                        "type": "boolean"
+                    },
+                    "kubeNodeLabel": {
+                        "type": "string"
+                    },
+                    "kubeZoneKey": {
+                        "type": "string"
+                    },
+                    "kubeLBType": {
+                        "type": "string"
+                    },
+                    "kubeStartupTime": {
+                        "type": "integer"
+                    },
+                    "kubeProvider": {
+                        "type": "string"
+                    },
+                    "kubeManagedPVs": {
+                        "type": "boolean"
+                    },
+                    "logsStorage": {
+                        "type": "object"
+                    },
+                    "logsOptions": {
+                        "type": "object"
+                    },
+                    "vpcEndpoints": {
+                        "type": "boolean"
+                    },
+                    "publicLB": {
+                        "type": "boolean"
+                    },
+                    "privateLB": {
+                        "type": "boolean"
+                    },
+                    "loadBalancePROXYProtocolV2": {
+                        "type": "boolean"
+                    },
+                    "internalEncryption": {
+                        "type": "boolean"
+                    },
+                    "monitoring": {
+                        "type": "boolean"
+                    },
+                    "monitoringUrl": {
+                        "type": "string"
+                    },
+                    "monitoringInfo": {
+                        "type": "object"
+                    },
+                    "monitoringCheck": {
+                        "type": "string"
+                    },
+                    "dashboardUrl": {
+                        "type": "string"
+                    },
+                    "backupOptions": {
+                        "type": "object"
+                    },
+                    "imageRegistry": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": "object"
+                    },
+                    "resourceLimits": {
+                        "type": "object"
+                    },
+                    "notes": {
+                        "type": "string"
+                    },
+                    "datadogSettings": {
+                        "type": "object"
+                    },
+                    "datadogPassword": {
+                        "type": "string"
+                    },
+                    "listenCheck": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Cluster": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "adminPass": {
+                        "type": "string"
+                    },
+                    "startupTime": {
+                        "type": "integer"
+                    },
+                    "troubleshootingMode": {
+                        "type": "boolean"
+                    },
+                    "role": {
+                        "type": "string"
+                    },
+                    "backupSource": {
+                        "type": "string"
+                    },
+                    "replicaSource": {
+                        "type": "string"
+                    },
+                    "alertsEmail": {
+                        "type": "string"
+                    },
+                    "alertsSettings": {
+                        "type": "object"
+                    },
+                    "datadogSettings": {
+                        "type": "object"
+                    },
+                    "systemVersion": {
+                        "type": "string"
+                    },
+                    "storagePolicy": {
+                        "type": "string"
+                    },
+                    "moveFactor": {
+                        "type": "number"
+                    },
+                    "objectStorages": {
+                        "type": "object"
+                    },
+                    "secretHandler": {
+                        "type": "string"
+                    },
+                    "nodes": {
+                        "type": "string"
+                    },
+                    "replicas": {
+                        "type": "string"
+                    },
+                    "shards": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": "object"
+                    },
+                    "backupOptions": {
+                        "type": "object"
+                    },
+                    "backupConfigModifications": {
+                        "type": "object"
+                    },
+                    "locked": {
+                        "type": "boolean"
+                    },
+                    "endpoint": {
+                        "type": "string"
+                    },
+                    "endpointHTTP": {
+                        "type": "string"
+                    },
+                    "alternateEndpoints": {
+                        "type": "object"
+                    },
+                    "endpointsEnabled": {
+                        "type": "object"
+                    },
+                    "annotations": {
+                        "type": "object"
+                    },
+                    "secure": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "checkTime": {
+                        "type": "string"
+                    },
+                    "tableSyncTime": {
+                        "type": "string"
+                    },
+                    "profileSyncTime": {
+                        "type": "string"
+                    },
+                    "metricsUpdateTime": {
+                        "type": "string"
+                    },
+                    "latestBackupTime": {
+                        "type": "string"
+                    },
+                    "backupScheduleUpdate": {
+                        "type": "string"
+                    },
+                    "chGuardSettings": {
+                        "type": "object"
+                    },
+                    "customLBAnnotations": {
+                        "type": "object"
+                    },
+                    "zoneAwareness": {
+                        "type": "boolean"
+                    },
+                    "uptime": {
+                        "type": "string"
+                    },
+                    "uptimeSettings": {
+                        "type": "object"
+                    },
+                    "actionSchedule": {
+                        "type": "object"
+                    },
+                    "timezone": {
+                        "type": "string"
+                    },
+                    "uptimeCheckTime": {
+                        "type": "string"
+                    },
+                    "altinitySupport": {
+                        "type": "string"
+                    },
+                    "altinityPassword": {
+                        "type": "string"
+                    },
+                    "altinityOptions": {
+                        "type": "object"
+                    },
+                    "mysqlProtocol": {
+                        "type": "boolean"
+                    },
+                    "mysqlPort": {
+                        "type": "integer"
+                    },
+                    "state": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ClusterVolume": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "class": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "integer"
+                    },
+                    "throughput": {
+                        "type": "integer"
+                    },
+                    "iops": {
+                        "type": "integer"
+                    },
+                    "isCordoned": {
+                        "type": "boolean"
+                    },
+                    "isRemoved": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "Node": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "containerId": {
+                        "type": "string"
+                    },
+                    "volumeId": {
+                        "type": "string"
+                    },
+                    "terminate": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "host": {
+                        "type": "string"
+                    },
+                    "publicHost": {
+                        "type": "string"
+                    },
+                    "port": {
+                        "type": "integer"
+                    },
+                    "portTLS": {
+                        "type": "integer"
+                    },
+                    "httpPort": {
+                        "type": "integer"
+                    },
+                    "httpPortTLS": {
+                        "type": "integer"
+                    },
+                    "user": {
+                        "type": "string"
+                    },
+                    "pass": {
+                        "type": "string"
+                    },
+                    "sshHost": {
+                        "type": "string"
+                    },
+                    "sshPort": {
+                        "type": "string"
+                    },
+                    "sshUser": {
+                        "type": "string"
+                    },
+                    "sshPass": {
+                        "type": "string"
+                    },
+                    "sshKey": {
+                        "type": "string"
+                    },
+                    "version": {
+                        "type": "string"
+                    },
+                    "checkTime": {
+                        "type": "string"
+                    },
+                    "awsOptions": {
+                        "type": "object"
+                    },
+                    "dataPath": {
+                        "type": "string"
+                    },
+                    "metrics": {
+                        "type": "object"
+                    }
+                }
+            },
+            "NodeType": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "scope": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "isSpot": {
+                        "type": "boolean"
+                    },
+                    "storageClass": {
+                        "type": "string"
+                    },
+                    "extraSpec": {
+                        "type": "object"
+                    },
+                    "tolerations": {
+                        "type": "object"
+                    },
+                    "nodeSelector": {
+                        "type": "object"
+                    },
+                    "capacity": {
+                        "type": "integer"
+                    },
+                    "cpu": {
+                        "type": "number"
+                    },
+                    "memory": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "ZookeeperCluster": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "tag": {
+                        "type": "string"
+                    },
+                    "launched": {
+                        "type": "boolean"
+                    },
+                    "dedicated": {
+                        "type": "boolean"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "size": {
+                        "type": "string"
+                    },
+                    "suffix": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Zookeeper": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "index": {
+                        "type": "integer"
+                    },
+                    "host": {
+                        "type": "string"
+                    },
+                    "port": {
+                        "type": "integer"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "sshHost": {
+                        "type": "string"
+                    },
+                    "sshPort": {
+                        "type": "string"
+                    },
+                    "sshUser": {
+                        "type": "string"
+                    },
+                    "sshPass": {
+                        "type": "string"
+                    },
+                    "options": {
+                        "type": "object"
+                    },
+                    "containerId": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "string"
+                    },
+                    "terminate": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Profile": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ProfileSetting": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "parsed": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ClusterSetting": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "valueFrom": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ClusterEnvSetting": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "value": {
+                        "type": "string"
+                    },
+                    "valueFrom": {
+                        "type": "string"
+                    }
+                }
+            },
+            "DbUser": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "login": {
+                        "type": "string"
+                    },
+                    "password": {
+                        "type": "string"
+                    },
+                    "networks": {
+                        "type": "string"
+                    },
+                    "databases": {
+                        "type": "string"
+                    },
+                    "accessManagement": {
+                        "type": "boolean"
+                    }
+                }
+            },
+            "ActionLog": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "created": {
+                        "type": "string"
+                    },
+                    "updated": {
+                        "type": "string"
+                    },
+                    "controller": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "url": {
+                        "type": "string"
+                    },
+                    "clientIP": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "state": {
+                        "type": "object"
+                    },
+                    "request": {
+                        "type": "object"
+                    },
+                    "success": {
+                        "type": "boolean"
+                    },
+                    "confirmed": {
+                        "type": "boolean"
+                    },
+                    "error": {
+                        "type": "string"
+                    },
+                    "userInfo": {
+                        "type": "object"
+                    },
+                    "clusterInfo": {
+                        "type": "object"
+                    }
+                }
+            },
+            "Notification": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "created": {
+                        "type": "string"
+                    },
+                    "expiry": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "level": {
+                        "type": "string"
+                    },
+                    "channelPopup": {
+                        "type": "boolean"
+                    },
+                    "channelEmail": {
+                        "type": "boolean"
+                    },
+                    "sticky": {
+                        "type": "boolean"
+                    },
+                    "tag": {
+                        "type": "string"
+                    },
+                    "additionalEmails": {
+                        "type": "string"
+                    },
+                    "recipientsCount": {
+                        "type": "integer"
+                    },
+                    "lastSent": {
+                        "type": "string"
+                    }
+                }
+            },
+            "AltinityNote": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "created": {
+                        "type": "string"
+                    },
+                    "severity": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "paths": {
+        "/reference.json": {
+            "get": {
+                "summary": "Gets API full specification",
+                "tags": [
+                    "Utilities"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/auth0/connections": {
+            "get": {
+                "summary": "Returns available Auth0 connections for authentication",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/aws-marketplace-gateway": {
+            "post": {
+                "summary": "Handles landing for AWS Marketplace",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "x-amzn-marketplace-token",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "confirm",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/aws-marketplace-sub": {
+            "post": {
+                "summary": "Handles AWS Marketplace SNS subscriptions",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "Type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "MessageId",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Token",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "TopicArn",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Message",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "SubscribeURL",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Timestamp",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "SignatureVersion",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "Signature",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "SigningCertURL",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/gcp-marketplace-gateway": {
+            "post": {
+                "summary": "Handles landing for Google Marketplace",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "x-gcp-marketplace-token",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "summary": "Provides a token for a pair of users login and password",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "login",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login/recover": {
+            "post": {
+                "summary": "Sends out an email with password reset link",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "login",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login/reset": {
+            "get": {
+                "summary": "Checks whether password reset token is active",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Checks whether password reset token is active",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login/verify": {
+            "post": {
+                "summary": "Login with 2FA verification code",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/probe": {
+            "get": {
+                "summary": "System probe",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/signup": {
+            "post": {
+                "summary": "Creates a trial account in Altinity.Cloud",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "company",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "envName",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "deployment",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "region",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "location",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "captcha",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/signup-email": {
+            "post": {
+                "summary": "Creates a trial account in Altinity.Cloud using only Email",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "captcha",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/signup/confirm": {
+            "get": {
+                "summary": "Checks whether signup token is active",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Finishes up signup procedure",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "password",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/singleauth": {
+            "get": {
+                "summary": "Provides with a target URL for Auth0",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "summary": "Authenticate user with Auth0 oAuth token",
+                "tags": [
+                    "Auth"
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": []
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
