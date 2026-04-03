@@ -1,7 +1,7 @@
 package api
 
 import (
-	"encoding/json"
+
 	"fmt"
 
 	"github.com/altinity/acmctl/pkg/models"
@@ -80,8 +80,8 @@ func (c *Client) RestoreCluster(id string, params map[string]string) error {
 	return c.Do("POST", fmt.Sprintf("/cluster/%s/restore", id), params, nil)
 }
 
-func (c *Client) QueryCluster(id string, params map[string]string) (json.RawMessage, error) {
-	var result json.RawMessage
+func (c *Client) QueryCluster(id string, params map[string]string) (interface{}, error) {
+	var result interface{}
 	err := c.Do("POST", fmt.Sprintf("/cluster/%s/query", id), params, &result)
 	return result, err
 }
@@ -92,20 +92,20 @@ func (c *Client) ListClusterNodes(id string) ([]models.Node, error) {
 	return nodes, err
 }
 
-func (c *Client) GetClusterStatus(id string) (json.RawMessage, error) {
-	var result json.RawMessage
+func (c *Client) GetClusterStatus(id string) (interface{}, error) {
+	var result interface{}
 	err := c.Do("GET", fmt.Sprintf("/cluster/%s/status", id), nil, &result)
 	return result, err
 }
 
-func (c *Client) ListClusterBackups(id string) (json.RawMessage, error) {
-	var result json.RawMessage
+func (c *Client) ListClusterBackups(id string) (interface{}, error) {
+	var result interface{}
 	err := c.Do("GET", fmt.Sprintf("/cluster/%s/backups", id), nil, &result)
 	return result, err
 }
 
-func (c *Client) GetClusterLogs(clusterID string, params map[string]string) (json.RawMessage, error) {
-	var result json.RawMessage
+func (c *Client) GetClusterLogs(clusterID string, params map[string]string) (interface{}, error) {
+	var result interface{}
 	err := c.Do("GET", fmt.Sprintf("/cluster/%s/logs", clusterID), params, &result)
 	return result, err
 }

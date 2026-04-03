@@ -30,6 +30,7 @@ func Print(format string, data interface{}) error {
 func printJSON(w io.Writer, data interface{}) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
 	return enc.Encode(data)
 }
 

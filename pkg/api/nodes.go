@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/altinity/acmctl/pkg/models"
@@ -24,18 +23,18 @@ func (c *Client) RestartNode(id string, hard bool) error {
 	return c.Do("PUT", fmt.Sprintf("/node/%s/restart", id), params, nil)
 }
 
-func (c *Client) GetNodeStatus(id string) (json.RawMessage, error) {
-	var result json.RawMessage
+func (c *Client) GetNodeStatus(id string) (interface{}, error) {
+	var result interface{}
 	err := c.Do("GET", fmt.Sprintf("/node/%s/status", id), nil, &result)
 	return result, err
 }
 
-func (c *Client) GetNodeMetrics(id string, detailed bool) (json.RawMessage, error) {
+func (c *Client) GetNodeMetrics(id string, detailed bool) (interface{}, error) {
 	params := map[string]string{}
 	if detailed {
 		params["detailed"] = "true"
 	}
-	var result json.RawMessage
+	var result interface{}
 	err := c.Do("GET", fmt.Sprintf("/node/%s/metrics", id), params, &result)
 	return result, err
 }
