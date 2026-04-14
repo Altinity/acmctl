@@ -77,10 +77,26 @@ func (c *Client) Do(method, path string, params map[string]string, result interf
 		return &APIError{StatusCode: 401, Message: "authentication required — run 'acmctl login' or set --token"}
 	}
 
+	// Handle empty response body
+	trimmed := strings.TrimSpace(string(body))
+	if trimmed == "" || trimmed == "null" {
+		if resp.StatusCode >= 400 {
+			return &APIError{StatusCode: resp.StatusCode, Message: fmt.Sprintf("HTTP %d (empty response)", resp.StatusCode)}
+		}
+		return nil
+	}
+
 	var envelope models.APIResponse
 	if err := json.Unmarshal(body, &envelope); err != nil {
+		// Response is not in envelope format — try direct unmarshal or return error
 		if resp.StatusCode >= 400 {
-			return &APIError{StatusCode: resp.StatusCode, Message: string(body)}
+			return &APIError{StatusCode: resp.StatusCode, Message: trimmed}
+		}
+		// Try to unmarshal directly into result for non-envelope responses
+		if result != nil {
+			if directErr := json.Unmarshal(body, result); directErr == nil {
+				return nil
+			}
 		}
 		return fmt.Errorf("failed to parse response: %w", err)
 	}
@@ -90,7 +106,7 @@ func (c *Client) Do(method, path string, params map[string]string, result interf
 	}
 
 	if resp.StatusCode >= 400 {
-		return &APIError{StatusCode: resp.StatusCode, Message: string(body)}
+		return &APIError{StatusCode: resp.StatusCode, Message: trimmed}
 	}
 
 	if result != nil && envelope.Data != nil {

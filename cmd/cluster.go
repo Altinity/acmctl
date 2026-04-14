@@ -58,16 +58,29 @@ var clusterLaunchCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		params := map[string]string{}
-		flags := []string{"name", "type", "nodes", "shards", "replicas", "node-type", "version",
-			"version-image", "size", "disks", "admin-pass", "memory", "storage-class",
-			"throughput", "iops", "lb-type", "secure", "uptime", "timezone", "role"}
-		apiKeys := []string{"name", "type", "nodes", "shards", "replicas", "nodeType", "version",
-			"versionImage", "size", "disks", "adminPass", "memory", "storageClass",
-			"throughput", "iops", "lbType", "secure", "uptime", "timezone", "role"}
-		for i, f := range flags {
-			v, _ := cmd.Flags().GetString(f)
-			if v != "" {
-				params[apiKeys[i]] = v
+		flagMap := map[string]string{
+			"name": "name", "type": "type", "nodes": "nodes", "shards": "shards",
+			"replicas": "replicas", "node-type": "nodeType", "version": "version",
+			"version-image": "versionImage", "size": "size", "disks": "disks",
+			"admin-pass": "adminPass", "memory": "memory", "storage-class": "storageClass",
+			"throughput": "throughput", "iops": "iops", "lb-type": "lbType",
+			"secure": "secure", "uptime": "uptime", "timezone": "timezone", "role": "role",
+			"zookeeper": "zookeeper", "zookeeper-options": "zookeeperOptions",
+			"host": "host", "port": "port", "ssh-port": "sshPort", "http-port": "httpPort",
+			"data-path": "dataPath", "source-cluster": "sourceCluster",
+			"replicate-schema": "replicateSchema", "backup-source": "backupSource",
+			"ip-whitelist": "ipWhitelist", "restore-options": "restoreOptions",
+			"backup-options": "backupOptions", "datadog-settings": "datadogSettings",
+			"uptime-settings": "uptimeSettings", "alternate-endpoints": "alternateEndpoints",
+			"annotations": "annotations", "azlist": "azlist",
+			"custom-lb-annotations": "customLBAnnotations",
+			"chguard-settings": "chGuardSettings",
+			"mysql-protocol": "mysqlProtocol", "mysql-port": "mysqlPort",
+			"zone-awareness": "zoneAwareness",
+		}
+		for flag, key := range flagMap {
+			if v, _ := cmd.Flags().GetString(flag); v != "" {
+				params[key] = v
 			}
 		}
 		cluster, err := apiClient.LaunchCluster(args[0], params)
@@ -296,7 +309,14 @@ func init() {
 	// launch
 	for _, f := range []string{"name", "type", "nodes", "shards", "replicas", "node-type", "version",
 		"version-image", "size", "disks", "admin-pass", "memory", "storage-class",
-		"throughput", "iops", "lb-type", "secure", "uptime", "timezone", "role"} {
+		"throughput", "iops", "lb-type", "secure", "uptime", "timezone", "role",
+		"zookeeper", "zookeeper-options",
+		"host", "port", "ssh-port", "http-port", "data-path",
+		"source-cluster", "replicate-schema", "backup-source",
+		"ip-whitelist", "restore-options", "backup-options", "datadog-settings",
+		"uptime-settings", "alternate-endpoints", "annotations", "azlist",
+		"custom-lb-annotations", "chguard-settings",
+		"mysql-protocol", "mysql-port", "zone-awareness"} {
 		clusterLaunchCmd.Flags().String(f, "", "")
 	}
 	_ = clusterLaunchCmd.MarkFlagRequired("name")
