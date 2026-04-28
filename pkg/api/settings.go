@@ -14,7 +14,7 @@ func (c *Client) ListClusterSettings(clusterID string) ([]models.ClusterSetting,
 
 func (c *Client) CreateClusterSetting(clusterID string, params map[string]string) (*models.ClusterSetting, error) {
 	var setting models.ClusterSetting
-	err := c.Do("POST", fmt.Sprintf("/cluster/%s/settings", clusterID), params, &setting)
+	err := c.DoForm("POST", fmt.Sprintf("/cluster/%s/settings", clusterID), params, &setting)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (c *Client) CreateClusterSetting(clusterID string, params map[string]string
 
 func (c *Client) UpdateClusterSetting(id string, params map[string]string) (*models.ClusterSetting, error) {
 	var setting models.ClusterSetting
-	err := c.Do("POST", fmt.Sprintf("/cluster-setting/%s", id), params, &setting)
+	err := c.DoForm("POST", fmt.Sprintf("/cluster-setting/%s", id), params, &setting)
 	if err != nil {
 		return nil, err
 	}

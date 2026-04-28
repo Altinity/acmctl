@@ -58,6 +58,45 @@ func (c *Client) Do(method, path string, params map[string]string, result interf
 		req.Header.Set("X-Auth-Token", c.Token)
 	}
 
+	return c.do(req, result)
+}
+
+// DoForm executes an API request with params encoded as application/x-www-form-urlencoded
+// in the request body instead of the URL query string. Use for endpoints whose params can
+// exceed Apache's ~8KB URI limit (e.g. cluster setting create/update with large XML values).
+// If result is non-nil, the response "data" field is unmarshaled into it.
+func (c *Client) DoForm(method, path string, body map[string]string, result interface{}) error {
+	u, err := url.Parse(c.BaseURL + "/" + strings.TrimLeft(path, "/"))
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	form := url.Values{}
+	for k, v := range body {
+		if v != "" {
+			form.Set(k, v)
+		}
+	}
+	encoded := form.Encode()
+
+	if c.Verbose {
+		fmt.Printf(">> %s %s (form body, %d bytes)\n", method, u.String(), len(encoded))
+	}
+
+	req, err := http.NewRequest(method, u.String(), strings.NewReader(encoded))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	if c.Token != "" {
+		req.Header.Set("X-Auth-Token", c.Token)
+	}
+
+	return c.do(req, result)
+}
+
+func (c *Client) do(req *http.Request, result interface{}) error {
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
