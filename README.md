@@ -1,6 +1,17 @@
 # acmctl
 
-CLI tool for [Altinity Cloud Manager API](https://acm.altinity.cloud/docs/).
+Slim CLI for the [Altinity Cloud Manager API](https://acm.altinity.cloud/docs/).
+
+## Design
+
+acmctl exposes a small set of high-touch commands (login, env list/get, cluster
+list/get/launch/update/delete/temp-creds) plus a generic `raw` passthrough for
+the rest of the API. The full hand-curated mapping of all 269 endpoints is
+preserved in `_legacy/` as reference material.
+
+For agent use, the `altinity-cloud` Claude Code skill in this repo's
+`.claude/skills/` is the recommended path — it teaches the agent to call the
+API directly with curl, with workflow recipes and a per-tag endpoint digest.
 
 ## Installation
 
@@ -11,230 +22,126 @@ cp acmctl ~/bin/
 
 ## Authentication
 
-Set your API token via environment variable:
+Recommended: keep the token in 1Password and resolve at session start
+via [`op`](https://developer.1password.com/docs/cli/) — no plaintext
+on disk.
 
 ```bash
-export ACMCTL_TOKEN="your-api-token"
+# Resolve from 1Password into the env (set ACM_API_KEY_OP_REF in
+# ~/.acm.env to a reference like op://Personal/ACM/api_key first):
+export ACMCTL_TOKEN=$(op read --no-newline "$ACM_API_KEY_OP_REF")
+
+# Or pass per-invocation:
+acmctl --token "$(op read --no-newline op://...)" cluster list
 ```
 
-Or save it to config:
+Other supported sources, in precedence order:
+
+- `--token <key>` / `--url <url>` flags
+- `ACMCTL_TOKEN` / `ACMCTL_URL` env vars
+- `ACM_API_KEY` env var (alias for token)
+- `~/.acmctl.yaml` config file (legacy; see Configuration below)
+
+Interactive login still works:
 
 ```bash
-acmctl login --token "your-api-token"
+acmctl login                   # device-flow OAuth
+acmctl login --token <key>     # writes the key to ~/.acmctl.yaml
 ```
 
-Or login interactively with email/password:
+## Commands
 
-```bash
-acmctl login
-```
-
-Token is stored in `~/.acmctl.yaml`.
-
-## Usage
-
-### Output formats
-
-All list/get commands support `--output` (`-o`) flag: `table` (default), `json`, `yaml`.
+### Lifecycle
 
 ```bash
 acmctl env list
-acmctl env list -o json
-acmctl env list -o yaml
-```
-
-### Environments
-
-```bash
-# List all environments
-acmctl env list
-
-# Get environment details
 acmctl env get 37
-acmctl env get 37 -o json
 
-# List clusters in an environment
-acmctl env clusters 37
-
-# List node types available in an environment
-acmctl env nodetypes 37
-
-# List zookeeper clusters in an environment
-acmctl env zookeepers 37
-
-# Delete an environment
-acmctl env delete 123
-```
-
-### Clusters
-
-```bash
-# List all clusters
-acmctl cluster list
-
-# Filter clusters (using shell tools)
-acmctl cluster list | grep demo
-
-# Get cluster details
+acmctl cluster list                       # all clusters
+acmctl cluster list --env 37              # filter by environment (client-side)
 acmctl cluster get 337
-acmctl cluster get 337 -o json
-acmctl cluster get 337 -o yaml
-
-# Get cluster status
-acmctl cluster status 337
-
-# List cluster nodes
-acmctl cluster nodes 337
-
-# List cluster backups
-acmctl cluster backups 337
-
-# Launch a new cluster in an environment
-acmctl cluster launch 37 --name my-cluster --node-type s1 --version 24.3
-
-# Restart a cluster
-acmctl cluster restart 337
-
-# Stop a cluster
-acmctl cluster stop 337
-
-# Resume a stopped cluster
-acmctl cluster resume 337
-
-# Upgrade ClickHouse version
-acmctl cluster upgrade 337 --version 24.8
-
-# Rescale a cluster
-acmctl cluster rescale 337 --node-type m1 --replicas 2
-
-# Trigger a backup
-acmctl cluster backup 337
-
-# Restore from backup
-acmctl cluster restore 337 --type s3 --bucket my-bucket --path /backups/latest
-
-# Execute a SQL query
-acmctl cluster query 337 --query "SELECT count() FROM system.tables"
-
-# Push cluster configuration
-acmctl cluster push 337
-
-# Delete a cluster
-acmctl cluster delete 337
-acmctl cluster delete 337 --terminate
+acmctl cluster delete 337                 # keep resources
+acmctl cluster delete 337 --terminate     # tear down resources
+acmctl cluster temp-creds 337             # → {"password":"..."}
 ```
 
-### Nodes
+### Launch / Update (JSON body on stdin)
 
 ```bash
-# List nodes in a cluster
-acmctl cluster nodes 337
+cat <<EOF | acmctl cluster launch 37
+{ "name": "my-cluster", "nodeType": "s1", "version": "24.3" }
+EOF
 
-# Get node status
-acmctl node status 193
-
-# Get node metrics
-acmctl node metrics 193
-acmctl node metrics 193 --detailed
-
-# Restart a node
-acmctl node restart 193
-acmctl node restart 193 --hard
+cat update.json | acmctl cluster update 337
 ```
 
-### Database Users
+`launch`'s env-id arg is optional — falls back to `ACM_API_ENV_ID` env var.
 
-```bash
-# List database users for a cluster
-acmctl dbuser list 337
+### Generic passthrough
 
-# Create a database user
-acmctl dbuser create 337 --login myuser --password secret123
+`acmctl raw <METHOD> <path>` covers everything else. Body is auto-detected:
 
-# Delete a database user
-acmctl dbuser delete 337 990
-```
+- **No body** — most GETs and DELETEs:
+  ```bash
+  acmctl raw GET /cluster/337/status
+  acmctl raw POST /cluster/337/backup
+  acmctl raw DELETE /cluster/337/0
+  ```
+- **JSON body** — pipe on stdin:
+  ```bash
+  echo '{"name":"foo"}' | acmctl raw POST /cluster/337
+  ```
+- **Form-urlencoded** — `-F key=value` (repeatable, supports `@file` to load):
+  ```bash
+  acmctl raw POST /cluster/337/query -F query='SELECT 1' -F user=admin
+  acmctl raw POST /cluster/337/kafka-configuration -F filename=k.xml -F xml=@./kafka.xml
+  ```
 
-### Cluster Settings
-
-```bash
-# List cluster settings
-acmctl setting list 337
-
-# Create a setting
-acmctl setting create 337 --name max_memory_usage --value 10000000000
-
-# Delete a setting
-acmctl setting delete 456
-```
-
-### Accounts
-
-```bash
-# Get current account info
-acmctl account get
-
-# List all accounts
-acmctl account list
-
-# Create an account
-acmctl account create --email user@example.com --name "John Doe" --password secret
-
-# Delete an account
-acmctl account delete 42
-```
-
-### Debugging
-
-```bash
-# Verbose mode — shows HTTP requests and responses
-acmctl env list -v
-acmctl cluster get 337 -v
-```
-
-### Override settings per command
-
-```bash
-# Use a different token
-acmctl --token other-token env list
-
-# Use a different ACM instance
-acmctl --url https://other-acm.example.com/api/ env list
-
-# Use a different config file
-acmctl --config /path/to/config.yaml env list
-```
-
-### Shell completion
-
-```bash
-# Bash
-source <(acmctl completion bash)
-
-# Zsh
-source <(acmctl completion zsh)
-
-# Fish
-acmctl completion fish | source
-```
+Combining stdin JSON with `-F` flags is an error.
 
 ## Configuration
 
-Config file: `~/.acmctl.yaml`
+Legacy config file `~/.acmctl.yaml`:
 
 ```yaml
 url: https://acm.altinity.cloud/api/
 token: your-api-token
-output: table
 ```
 
-Environment variables (override config file):
+This file persists the token to disk in plaintext, which is why the
+1Password-based flow above is preferred. If present, it's the
+lowest-priority source — overridden by:
 
-- `ACMCTL_TOKEN` — API token
-- `ACMCTL_URL` — API base URL
+- `--token <key>` / `--url <url>` flags
+- `ACMCTL_TOKEN` / `ACMCTL_URL` env vars
+- `ACM_API_KEY` env var (alias for token)
 
-## API Reference
+## Output
 
-Full API spec: [reference.json](reference.json) / [reference_auth.json](reference_auth.json)
+All commands emit JSON to stdout. Pipe to `jq` for filtering / extraction. No
+table or YAML formatting — agents and scripts both want JSON.
 
-Swagger UI: https://acm.altinity.cloud/docs/
+## Restoring richer commands
+
+The 269-endpoint hand-curated implementation lives in `_legacy/cmd/` and
+`_legacy/pkg/`. Go's build toolchain ignores directories starting with `_`, so
+those files don't compile against the slim build but stay easy to grep.
+
+To bring back, e.g., billing:
+
+```bash
+cp _legacy/cmd/billing.go cmd/
+cp _legacy/pkg/api/billing.go pkg/api/
+# Re-add helpers if needed: collectFieldFlags, flagsToParams (in _legacy/cmd/helpers.go)
+go build ./...
+```
+
+See `_legacy/README.md`.
+
+## Shell completion
+
+```bash
+source <(acmctl completion bash)
+acmctl completion zsh | source
+acmctl completion fish | source
+```
