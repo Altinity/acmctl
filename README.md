@@ -22,9 +22,9 @@ cp acmctl ~/bin/
 
 ## Authentication
 
-Recommended: keep the token in 1Password and resolve at session start
-via [`op`](https://developer.1password.com/docs/cli/) — no plaintext
-on disk.
+Keep the token in 1Password and resolve at session start via
+[`op`](https://developer.1password.com/docs/cli/) — no plaintext on
+disk.
 
 ```bash
 # Resolve from 1Password into the env (set ACM_API_KEY_OP_REF in
@@ -35,19 +35,14 @@ export ACMCTL_TOKEN=$(op read --no-newline "$ACM_API_KEY_OP_REF")
 acmctl --token "$(op read --no-newline op://...)" cluster list
 ```
 
-Other supported sources, in precedence order:
+Supported sources, in precedence order:
 
 - `--token <key>` / `--url <url>` flags
 - `ACMCTL_TOKEN` / `ACMCTL_URL` env vars
 - `ACM_API_KEY` env var (alias for token)
-- `~/.acmctl.yaml` config file (legacy; see Configuration below)
 
-Interactive login still works:
-
-```bash
-acmctl login                   # device-flow OAuth
-acmctl login --token <key>     # writes the key to ~/.acmctl.yaml
-```
+Interactive login (`acmctl login`) is also supported, but writes
+the token to `~/.acmctl.yaml`. Avoid it on shared workstations.
 
 ## Commands
 
@@ -98,23 +93,6 @@ cat update.json | acmctl cluster update 337
   ```
 
 Combining stdin JSON with `-F` flags is an error.
-
-## Configuration
-
-Legacy config file `~/.acmctl.yaml`:
-
-```yaml
-url: https://acm.altinity.cloud/api/
-token: your-api-token
-```
-
-This file persists the token to disk in plaintext, which is why the
-1Password-based flow above is preferred. If present, it's the
-lowest-priority source — overridden by:
-
-- `--token <key>` / `--url <url>` flags
-- `ACMCTL_TOKEN` / `ACMCTL_URL` env vars
-- `ACM_API_KEY` env var (alias for token)
 
 ## Output
 
