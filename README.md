@@ -72,28 +72,138 @@ go build -o acmctl .
 cp acmctl ~/bin/
 ```
 
-## Authentication
+## Profiles (multi-environment)
 
-Keep the token in 1Password and resolve at session start via
-[`op`](https://developer.1password.com/docs/cli/) — no plaintext on
-disk.
+A single `~/.acmctl.yaml` can hold multiple ACM environments —
+prod, dev, stage, …— and you switch between them per command or
+per shell.
 
-```bash
-# Resolve from 1Password into the env (set ACM_API_KEY_OP_REF in
-# ~/.acm.env to a reference like op://Personal/ACM/api_key first):
-export ACM_API_KEY=$(op read --no-newline "$ACM_API_KEY_OP_REF")
-
-# Or pass per-invocation:
-acmctl --token "$(op read --no-newline op://...)" cluster list
+```yaml
+# ~/.acmctl.yaml
+default_profile: prod
+profiles:
+  prod:
+    url: https://acm.altinity.cloud/api
+    token: <prod token>
+  dev:
+    url: https://acm.dev.altinity.cloud/api
+    token: <dev token>
+  stage:
+    url: https://acm.staging.altinity.cloud/api
+    token: <stage token>
 ```
 
-Supported sources, in precedence order:
+Manage profiles via:
 
-- `--token <key>` / `--url <url>` flags
-- `ACM_API_KEY` / `ACMCTL_URL` env vars
+```bash
+acmctl config add-profile prod  --url https://acm.altinity.cloud/api
+acmctl config add-profile dev   --url https://acm.dev.altinity.cloud/api
+acmctl config add-profile stage --url https://acm.staging.altinity.cloud/api
 
-Interactive login (`acmctl login`) is also supported, but writes
-the token to `~/.acmctl.yaml`. Avoid it on shared workstations.
+acmctl config list                # show all profiles + which is default
+acmctl config get                 # show the active profile's url + token state
+acmctl config use-profile dev     # change the default
+acmctl config remove-profile dev
+```
+
+Select per command (highest precedence wins):
+
+1. `--profile <name>` flag
+2. `ACMCTL_PROFILE` env var
+3. `default_profile:` in the config
+4. fallback: the only profile, if exactly one is defined
+
+```bash
+acmctl --profile dev cluster list
+ACMCTL_PROFILE=stage acmctl cluster list
+```
+
+Tokens for `login` / `oauth` / `logout` apply to the **active**
+profile. `acmctl logout --all` clears tokens from every profile.
+
+A legacy flat config (top-level `url`/`token`, no `profiles:`
+section) is auto-loaded as a synthetic `default` profile and
+rewritten in the new layout on first save.
+
+## Authentication
+
+Three ways to populate a profile's token, in order of preference:
+
+### 1. 1Password-resolved API key (recommended for unattended use)
+
+Mint a long-lived API key once via the ACM web UI (Account → API
+tokens), store it in 1Password, then resolve it at shell start:
+
+```bash
+# in ~/.acm.env or your shell rc, with ACM_API_KEY_OP_REF set to
+# the op:// reference of the item:
+export ACM_API_KEY=$(op read --no-newline "$ACM_API_KEY_OP_REF")
+```
+
+`ACM_API_KEY` overrides any token saved in the active profile, so
+nothing needs to be on disk. This is what `iso-acm` (the sandboxed
+acm wrapper) uses.
+
+### 2. `acmctl oauth` — browser-based PKCE (interactive)
+
+```bash
+acmctl --profile prod oauth
+```
+
+Opens your default browser to the Auth0 sign-in for the configured
+Auth0 tenant, listens on a fixed loopback port (49152, fallback
+49153/49154) for the callback, and saves the resulting ACM session
+token to the active profile.
+
+> **Status: blocked on an ACM backend change.** The full PKCE flow
+> works against Auth0 (token exchange returns a valid id_token), but
+> `POST /api/singleauth` rejects id_tokens minted by a Native CLI
+> client with "Bad credentials" — the endpoint expects state from
+> a flow ACM itself initiated server-side. Tracking:
+> [issue #1](https://github.com/Altinity/acmctl/issues/1).
+> Until that's resolved, `acmctl oauth` exits with a clear error;
+> use the API-key path above instead.
+
+Auth0 setup required (one-time, by an admin of the
+`altinity.auth0.com` tenant):
+
+- Native application, **Token Endpoint Authentication Method: None**
+- Allowed Callback URLs:
+  ```
+  http://localhost:49152/cb
+  http://localhost:49153/cb
+  http://localhost:49154/cb
+  ```
+- Connections enabled: at least the SSO connection users sign in
+  with (`google-oauth2` and/or any enterprise SSO)
+
+### 3. `acmctl login` — email / password (legacy)
+
+```bash
+acmctl --profile prod login
+```
+
+Prompts for email + password. Most ACM tenants are SSO-only and
+won't accept this; use `oauth` or the API-key path instead. Writes
+the token to the active profile.
+
+`--token <key>` non-interactively writes a known API key without
+prompting.
+
+### Sources, in precedence order
+
+For each request, the URL and token are resolved separately:
+
+- **URL**: `--url` flag → `ACMCTL_URL` env → active profile's `url`
+- **Token**: `--token` flag → `ACM_API_KEY` env → active profile's `token`
+
+### Logging out
+
+```bash
+acmctl logout                    # clear active profile's token
+acmctl --profile dev logout      # clear a specific profile's token
+acmctl logout --all              # clear every profile's token
+```
 
 ## Commands
 
