@@ -112,6 +112,11 @@ func requireProfile() (string, error) {
 	if activeProfile == "" {
 		return "", fmt.Errorf("no profile selected — pass --profile, set ACMCTL_PROFILE, or run `acmctl config use-profile <name>`")
 	}
+	// A flag/env URL override is enough — don't insist on a profile URL
+	// when the caller has supplied one out-of-band.
+	if urlFlag != "" || os.Getenv("ACMCTL_URL") != "" {
+		return activeProfile, nil
+	}
 	if cfg == nil || cfg.Profiles[activeProfile].URL == "" {
 		return activeProfile, fmt.Errorf("profile %q has no url set; edit %s or run `acmctl config add-profile %s --url <url>`", activeProfile, cfgFile, activeProfile)
 	}

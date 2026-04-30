@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -177,15 +179,6 @@ func profileNames(m map[string]Profile) string {
 	for k := range m {
 		names = append(names, k)
 	}
-	// stable order for predictable error messages
-	for i := 1; i < len(names); i++ {
-		for j := i; j > 0 && names[j-1] > names[j]; j-- {
-			names[j-1], names[j] = names[j], names[j-1]
-		}
-	}
-	out := names[0]
-	for _, n := range names[1:] {
-		out += ", " + n
-	}
-	return out
+	sort.Strings(names)
+	return strings.Join(names, ", ")
 }

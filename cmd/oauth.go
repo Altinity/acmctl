@@ -26,7 +26,8 @@ Usage with profiles:
 
 The token is short-lived (Auth0 JWT, typically hours). For
 long-lived programmatic access, mint an API key in the ACM web UI
-and put it in 1Password under op://Employee/ACM_API_KEY.
+and store it in your password manager (e.g., op://<vault>/<item>),
+then export ACM_API_KEY in your shell.
 
 Auth0 setup required (one-time, by an admin of the altinity.auth0.com
 tenant): a Native application with PKCE-only auth and these callback

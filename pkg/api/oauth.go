@@ -71,7 +71,7 @@ func (c *Client) OAuthLogin(ctx context.Context, openBrowser bool) (*OAuthResult
 	if err != nil {
 		return nil, err
 	}
-	defer ln.Close()
+	// No `defer ln.Close()` — server.Shutdown() below closes the listener.
 	redirectURI := fmt.Sprintf("http://localhost:%d%s", port, callbackPath)
 
 	// PKCE state.
@@ -127,7 +127,15 @@ func (c *Client) OAuthLogin(ctx context.Context, openBrowser bool) (*OAuthResult
 			resultCh <- cbResult{code: code, state: gotState}
 		}),
 	}
-	go func() { _ = server.Serve(ln) }()
+	serveErr := make(chan error, 1)
+	go func() {
+		err := server.Serve(ln)
+		// http.ErrServerClosed is the normal shutdown signal; only
+		// surface real listener / accept failures.
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serveErr <- err
+		}
+	}()
 	defer func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -144,6 +152,8 @@ func (c *Client) OAuthLogin(ctx context.Context, openBrowser bool) (*OAuthResult
 	var cb cbResult
 	select {
 	case cb = <-resultCh:
+	case err := <-serveErr:
+		return nil, fmt.Errorf("callback server failed: %w", err)
 	case <-time.After(flowTimeout):
 		return nil, fmt.Errorf("timed out waiting for browser callback after %s", flowTimeout)
 	case <-ctx.Done():
@@ -253,7 +263,7 @@ func (c *Client) exchangeAuthCode(ctx context.Context, code, verifier, redirectU
 		ErrorDesc   string `json:"error_description"`
 	}
 	if err := json.Unmarshal(respBody, &parsed); err != nil {
-		return "", fmt.Errorf("decode token response (HTTP %d): %w", resp.StatusCode, err)
+		return "", fmt.Errorf("decode token response (HTTP %d, %d bytes): %w", resp.StatusCode, len(respBody), err)
 	}
 	if parsed.Error != "" {
 		return "", fmt.Errorf("auth0 %s: %s", parsed.Error, parsed.ErrorDesc)
@@ -292,6 +302,13 @@ func (c *Client) exchangeIDToken(ctx context.Context, idToken, code, state strin
 			err = fmt.Errorf("/singleauth attempt %d returned no token", i+1)
 		}
 		lastErr = err
+		// Stop on 401/403 — the credential is being rejected, not the
+		// request shape. Retrying just produces a second failed-login
+		// audit entry without changing the outcome.
+		var apiErr *APIError
+		if errors.As(err, &apiErr) && (apiErr.StatusCode == http.StatusUnauthorized || apiErr.StatusCode == http.StatusForbidden) {
+			break
+		}
 	}
 	return nil, fmt.Errorf("ACM /singleauth: %w", lastErr)
 }

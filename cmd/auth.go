@@ -56,7 +56,7 @@ ACM tenants are SSO-only and don't accept email/password directly.`,
 			return fmt.Errorf("login failed: %w", err)
 		}
 		if user.Token == "" {
-			return fmt.Errorf("login succeeded but no token returned (2FA may be required — POST /login/verify with the code)")
+			return fmt.Errorf("login succeeded but no token returned (server may require 2FA — not supported by this CLI; use 'acmctl oauth' instead)")
 		}
 
 		profile.Token = user.Token
