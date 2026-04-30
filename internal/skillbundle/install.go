@@ -78,6 +78,20 @@ func Install(b *Bundle, opts InstallOpts) (Summary, error) {
 	}
 	dstRoot := filepath.Join(opts.ScopeRoot, opts.Agent.InstallSubdir, b.Skill)
 
+	// Skill-directory-level symlink guard. If the skill directory
+	// itself is a symlink (a common sandbox setup pointing at a
+	// workspace source tree), per-file writes would resolve through
+	// it and clobber the link's target. Remove the symlink before
+	// touching anything below; the file loop will then create a
+	// real directory and write fresh contents.
+	if li, err := os.Lstat(dstRoot); err == nil && li.Mode()&fs.ModeSymlink != 0 {
+		if !opts.DryRun {
+			if rerr := os.Remove(dstRoot); rerr != nil {
+				return Summary{}, fmt.Errorf("remove symlink at skill dir %s: %w", dstRoot, rerr)
+			}
+		}
+	}
+
 	// Sort for deterministic output.
 	rels := make([]string, 0, len(b.Files))
 	for k := range b.Files {
