@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -109,7 +110,8 @@ func (c *Client) setAuth(req *http.Request) {
 
 func (c *Client) send(req *http.Request, result interface{}) error {
 	if c.Verbose {
-		fmt.Printf(">> %s %s\n", req.Method, req.URL.String())
+		// To stderr so command output (JSON) can be piped cleanly.
+		fmt.Fprintf(os.Stderr, ">> %s %s\n", req.Method, req.URL.String())
 	}
 
 	resp, err := c.HTTPClient.Do(req)
@@ -124,11 +126,11 @@ func (c *Client) send(req *http.Request, result interface{}) error {
 	}
 
 	if c.Verbose {
-		fmt.Printf("<< HTTP %d (%d bytes)\n", resp.StatusCode, len(body))
+		fmt.Fprintf(os.Stderr, "<< HTTP %d (%d bytes)\n", resp.StatusCode, len(body))
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return &APIError{StatusCode: 401, Message: "authentication required — run 'acmctl login' or set ACMCTL_TOKEN"}
+		return &APIError{StatusCode: 401, Message: "authentication required — run 'acmctl login' or set ACM_API_KEY"}
 	}
 
 	trimmed := strings.TrimSpace(string(body))

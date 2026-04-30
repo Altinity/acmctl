@@ -12,12 +12,13 @@ fallback for everything else.
 
 ## Setup
 
-`acmctl` reads `ACMCTL_TOKEN` from env. iso / acm-shell sessions set
-`ACM_API_KEY` instead — bridge once at session start:
+`acmctl` reads `ACM_API_KEY` from env (set by iso from
+`[users.<name>.auth]` via 1Password, or by acm-shell after
+`acm_resolve_acm_api_key`). Nothing to do at session start — just
+verify it's set:
 
 ```bash
-export ACMCTL_TOKEN="${ACMCTL_TOKEN:-${ACM_API_KEY:-}}"
-[ -n "$ACMCTL_TOKEN" ] || echo "no ACM token — set ACM_API_KEY or run via iso-acm/acm" >&2
+[ -n "$ACM_API_KEY" ] || echo "no ACM token — run via iso-acm/acm or set ACM_API_KEY manually" >&2
 ```
 
 URL defaults to `https://acm.altinity.cloud/api/`. Override with `--url` or

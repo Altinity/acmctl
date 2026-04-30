@@ -81,7 +81,7 @@ disk.
 ```bash
 # Resolve from 1Password into the env (set ACM_API_KEY_OP_REF in
 # ~/.acm.env to a reference like op://Personal/ACM/api_key first):
-export ACMCTL_TOKEN=$(op read --no-newline "$ACM_API_KEY_OP_REF")
+export ACM_API_KEY=$(op read --no-newline "$ACM_API_KEY_OP_REF")
 
 # Or pass per-invocation:
 acmctl --token "$(op read --no-newline op://...)" cluster list
@@ -90,8 +90,7 @@ acmctl --token "$(op read --no-newline op://...)" cluster list
 Supported sources, in precedence order:
 
 - `--token <key>` / `--url <url>` flags
-- `ACMCTL_TOKEN` / `ACMCTL_URL` env vars
-- `ACM_API_KEY` env var (alias for token)
+- `ACM_API_KEY` / `ACMCTL_URL` env vars
 
 Interactive login (`acmctl login`) is also supported, but writes
 the token to `~/.acmctl.yaml`. Avoid it on shared workstations.

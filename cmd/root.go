@@ -45,7 +45,7 @@ var rootCmd = &cobra.Command{
 		// Flag/env overrides
 		if tokenFlag != "" {
 			cfg.Token = tokenFlag
-		} else if envToken := os.Getenv("ACMCTL_TOKEN"); envToken != "" {
+		} else if envToken := os.Getenv("ACM_API_KEY"); envToken != "" {
 			cfg.Token = envToken
 		}
 		if urlFlag != "" {
@@ -68,7 +68,11 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", config.DefaultPath(), "config file path")
+	// Default is ~/.acmctl.yaml; degrade to "" if HOME isn't set so
+	// the user gets a clearer "config not found" message at load time
+	// than a startup panic from init.
+	defaultCfg, _ := config.DefaultPath()
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", defaultCfg, "config file path")
 	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "API token (overrides config)")
 	rootCmd.PersistentFlags().StringVar(&urlFlag, "url", "", "API base URL (overrides config)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
