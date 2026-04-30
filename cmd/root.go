@@ -23,9 +23,17 @@ var rootCmd = &cobra.Command{
 	Short: "CLI for Altinity Cloud Manager",
 	Long:  "acmctl is a command-line tool for managing Altinity Cloud Manager resources.",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Skip client init for commands that don't need it
+		// Skip client init for commands that don't need it.
 		if cmd.Name() == "version" || cmd.Name() == "completion" || cmd.Name() == "help" {
 			return nil
+		}
+		// `acmctl skills install` / `update` fetch from GitHub —
+		// no ACM API client needed. Match any subcommand under
+		// the `skills` parent.
+		for c := cmd; c != nil; c = c.Parent() {
+			if c.Name() == "skills" {
+				return nil
+			}
 		}
 
 		var err error

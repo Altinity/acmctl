@@ -43,12 +43,27 @@ triggered. When triggered, ~3 KB of guidance loads. Per-tag files
 load only when the agent needs an endpoint outside the common-ops
 list in SKILL.md.
 
-To use from a Claude Code sandbox, symlink it into the user's skills
-directory:
+### Installing the skill
+
+`acmctl skills install` downloads the latest skill bundle (a
+`<skill>.zip` published by this repo's
+[Skill bundle](.github/workflows/skill-bundle.yml) GitHub Action)
+and copies it into the per-agent skills directory:
 
 ```bash
-ln -s /path/to/acmctl/skills/altinity-cloud ~/.claude/skills/altinity-cloud
+acmctl skills install                    # default: --scope global, --agent claude
+acmctl skills install --agent codex      # ~/.codex/skills/altinity-cloud/
+acmctl skills install --all              # claude + codex
+acmctl skills install --scope project    # ./.claude/skills/ (CWD)
+acmctl skills install --dry-run          # preview, no writes
+acmctl skills install --ref v1.0         # pin to a tagged release
+
+acmctl skills update                     # refresh whatever's installed
 ```
+
+`install` errors if a local file would be overwritten (rerun with
+`--force`); `update` always overwrites — use it when you've made
+local edits you want reverted, or just to pull the latest content.
 
 ## Installation
 

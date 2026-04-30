@@ -1,0 +1,60 @@
+name: Skill bundle
+
+# Build and publish a zip per skill directory under skills/. The
+# zips are attached to a rolling pre-release tagged "skill-bundle"
+# and (if the workflow ran for a tag push) to that tagged release
+# too, so `acmctl skills install --ref vX.Y` can pin to a release.
+#
+# Stable URL for the rolling artifact:
+#   https://github.com/Altinity/acmctl/releases/download/skill-bundle/altinity-cloud.zip
+
+on:
+  push:
+    branches: [main]
+    paths: ['skills/**']
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build zips (one per skill directory)
+        run: |
+          set -eu
+          mkdir -p dist
+          if [ ! -d skills ]; then
+            echo "no skills/ directory; nothing to bundle" >&2
+            exit 0
+          fi
+          for d in skills/*/; do
+            [ -d "$d" ] || continue
+            name=$(basename "$d")
+            (cd skills && zip -qr "../dist/${name}.zip" "$name")
+          done
+          ls -la dist/
+
+      - name: Publish to rolling skill-bundle release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: skill-bundle
+          name: Skill bundle (rolling)
+          body: |
+            Rolling pre-release with the latest skill zips from `main`.
+            Updated automatically whenever `skills/**` changes.
+
+            Stable download URL:
+            `https://github.com/${{ github.repository }}/releases/download/skill-bundle/<skill-name>.zip`
+          prerelease: true
+          files: dist/*.zip
+
+      - name: Also attach to tagged release (if this run was triggered by a tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
