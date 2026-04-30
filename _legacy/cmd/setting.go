@@ -123,6 +123,79 @@ can leave the cluster in a broken state.`,
 	},
 }
 
+var settingEnvListCmd = &cobra.Command{
+	Use:   "env-list <cluster-id>",
+	Short: "List cluster environment settings",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		settings, err := apiClient.ListClusterEnvSettings(args[0])
+		if err != nil {
+			return err
+		}
+		return output.PrintTabulableList(cfg.Output, settings)
+	},
+}
+
+var settingEnvCreateCmd = &cobra.Command{
+	Use:   "env-create <cluster-id>",
+	Short: "Add an environment setting to a cluster",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		params, err := collectSettingFlags(cmd)
+		if err != nil {
+			return err
+		}
+		setting, err := apiClient.CreateClusterEnvSetting(args[0], params)
+		if err != nil {
+			return err
+		}
+		return output.Print(cfg.Output, setting)
+	},
+}
+
+var settingEnvUpdateCmd = &cobra.Command{
+	Use:   "env-update <setting-id>",
+	Short: "Modify an environment setting for a cluster",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		params, err := collectSettingFlags(cmd)
+		if err != nil {
+			return err
+		}
+		setting, err := apiClient.UpdateClusterEnvSetting(args[0], params)
+		if err != nil {
+			return err
+		}
+		return output.Print(cfg.Output, setting)
+	},
+}
+
+var settingEnvDeleteCmd = &cobra.Command{
+	Use:   "env-delete <setting-id>",
+	Short: "Remove an environment setting from a cluster",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := apiClient.DeleteClusterEnvSetting(args[0]); err != nil {
+			return err
+		}
+		fmt.Printf("Env setting %s deleted.\n", args[0])
+		return nil
+	},
+}
+
+var settingSystemListCmd = &cobra.Command{
+	Use:   "system-list <cluster-id>",
+	Short: "List cluster system settings",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		result, err := apiClient.ListClusterSystemSettings(args[0])
+		if err != nil {
+			return err
+		}
+		return output.Print("json", result)
+	},
+}
+
 var settingDeleteCmd = &cobra.Command{
 	Use:   "delete <setting-id>",
 	Short: "Delete a cluster setting",
@@ -145,9 +218,20 @@ func init() {
 	settingUpdateCmd.Flags().String("value", "", "setting value (use @file or @- for stdin)")
 	settingUpdateCmd.Flags().String("description", "", "setting description (use @file or @- for stdin)")
 
+	for _, c := range []*cobra.Command{settingEnvCreateCmd, settingEnvUpdateCmd} {
+		c.Flags().String("name", "", "setting name")
+		c.Flags().String("value", "", "setting value (use @file or @- for stdin)")
+		c.Flags().String("description", "", "setting description (use @file or @- for stdin)")
+	}
+
 	settingCmd.AddCommand(settingListCmd)
 	settingCmd.AddCommand(settingCreateCmd)
 	settingCmd.AddCommand(settingUpdateCmd)
 	settingCmd.AddCommand(settingDeleteCmd)
+	settingCmd.AddCommand(settingEnvListCmd)
+	settingCmd.AddCommand(settingEnvCreateCmd)
+	settingCmd.AddCommand(settingEnvUpdateCmd)
+	settingCmd.AddCommand(settingEnvDeleteCmd)
+	settingCmd.AddCommand(settingSystemListCmd)
 	rootCmd.AddCommand(settingCmd)
 }

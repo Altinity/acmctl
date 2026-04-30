@@ -113,3 +113,34 @@ func (c *Client) GetClusterLogs(clusterID string, params map[string]string) (int
 func (c *Client) PushCluster(id string) error {
 	return c.Do("POST", fmt.Sprintf("/cluster/%s/push", id), nil, nil)
 }
+
+func (c *Client) GetSupportCredentials(id string) (*models.SupportCredentials, error) {
+	var creds models.SupportCredentials
+	err := c.Do("GET", fmt.Sprintf("/cluster/%s/support/credentials", id), nil, &creds)
+	if err != nil {
+		return nil, err
+	}
+	return &creds, nil
+}
+
+func (c *Client) RefreshSupportAccess(id string) error {
+	return c.Do("POST", fmt.Sprintf("/cluster/%s/support/refresh", id), nil, nil)
+}
+
+func (c *Client) ListCHAPIEndpoints(clusterID string) (interface{}, error) {
+	var result interface{}
+	err := c.Do("GET", fmt.Sprintf("/cluster/%s/ch-api-endpoints", clusterID), nil, &result)
+	return result, err
+}
+
+func (c *Client) UpdateCHAPIEndpoints(clusterID string, params map[string]string) (interface{}, error) {
+	var result interface{}
+	err := c.DoForm("POST", fmt.Sprintf("/cluster/%s/ch-api-endpoints", clusterID), params, &result)
+	return result, err
+}
+
+func (c *Client) RunCHAPIEndpoint(clusterID string, params map[string]string) (interface{}, error) {
+	var result interface{}
+	err := c.DoForm("POST", fmt.Sprintf("/cluster/%s/ch-api-endpoints/run", clusterID), params, &result)
+	return result, err
+}

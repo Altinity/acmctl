@@ -28,6 +28,14 @@ type ClusterEnvSetting struct {
 	ValueFrom string `json:"valueFrom" yaml:"valueFrom"`
 }
 
+func (s ClusterEnvSetting) TableHeaders() []string {
+	return []string{"ID", "NAME", "VALUE"}
+}
+
+func (s ClusterEnvSetting) TableRow() []string {
+	return []string{s.ID, s.Name, s.Value}
+}
+
 type Profile struct {
 	ID          string `json:"id" yaml:"id"`
 	Name        string `json:"name" yaml:"name"`
@@ -52,4 +60,12 @@ type ProfileSetting struct {
 	Value       string `json:"value" yaml:"value"`
 	Description string `json:"description" yaml:"description"`
 	Parsed      bool   `json:"parsed" yaml:"parsed"`
+}
+
+func (s ProfileSetting) TableHeaders() []string {
+	return []string{"ID", "NAME", "VALUE", "DESCRIPTION"}
+}
+
+func (s ProfileSetting) TableRow() []string {
+	return []string{s.ID, s.Name, s.Value, s.Description}
 }

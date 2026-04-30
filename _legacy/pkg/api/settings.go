@@ -45,3 +45,31 @@ func (c *Client) ListClusterProfiles(clusterID string) ([]models.Profile, error)
 	err := c.Do("GET", fmt.Sprintf("/cluster/%s/profiles", clusterID), nil, &profiles)
 	return profiles, err
 }
+
+func (c *Client) CreateClusterEnvSetting(clusterID string, params map[string]string) (*models.ClusterEnvSetting, error) {
+	var setting models.ClusterEnvSetting
+	err := c.DoForm("POST", fmt.Sprintf("/cluster/%s/env-settings", clusterID), params, &setting)
+	if err != nil {
+		return nil, err
+	}
+	return &setting, nil
+}
+
+func (c *Client) UpdateClusterEnvSetting(id string, params map[string]string) (*models.ClusterEnvSetting, error) {
+	var setting models.ClusterEnvSetting
+	err := c.DoForm("POST", fmt.Sprintf("/cluster-env-setting/%s", id), params, &setting)
+	if err != nil {
+		return nil, err
+	}
+	return &setting, nil
+}
+
+func (c *Client) DeleteClusterEnvSetting(id string) error {
+	return c.Do("DELETE", fmt.Sprintf("/cluster-env-setting/%s", id), nil, nil)
+}
+
+func (c *Client) ListClusterSystemSettings(clusterID string) (interface{}, error) {
+	var result interface{}
+	err := c.Do("GET", fmt.Sprintf("/cluster/%s/system-settings", clusterID), nil, &result)
+	return result, err
+}

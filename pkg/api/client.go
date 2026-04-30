@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,8 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/altinity/acmctl/pkg/models"
 )
 
 type Client struct {
@@ -29,74 +28,90 @@ func NewClient(baseURL, token string) *Client {
 	}
 }
 
-// Do executes an API request. Params are sent as query parameters for all methods.
-// If result is non-nil, the response "data" field is unmarshaled into it.
+// Do executes a request with optional query params. If result is non-nil, the
+// response "data" envelope is unmarshaled into it.
 func (c *Client) Do(method, path string, params map[string]string, result interface{}) error {
-	u, err := url.Parse(c.BaseURL + "/" + strings.TrimLeft(path, "/"))
+	u, err := c.url(path, params)
 	if err != nil {
-		return fmt.Errorf("invalid URL: %w", err)
+		return err
 	}
-
-	q := u.Query()
-	for k, v := range params {
-		if v != "" {
-			q.Set(k, v)
-		}
-	}
-	u.RawQuery = q.Encode()
-
-	if c.Verbose {
-		fmt.Printf(">> %s %s\n", method, u.String())
-	}
-
-	req, err := http.NewRequest(method, u.String(), nil)
+	req, err := http.NewRequest(method, u, nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("create request: %w", err)
 	}
-
-	if c.Token != "" {
-		req.Header.Set("X-Auth-Token", c.Token)
-	}
-
-	return c.do(req, result)
+	c.setAuth(req)
+	return c.send(req, result)
 }
 
-// DoForm executes an API request with params encoded as application/x-www-form-urlencoded
-// in the request body instead of the URL query string. Use for endpoints whose params can
-// exceed Apache's ~8KB URI limit (e.g. cluster setting create/update with large XML values).
-// If result is non-nil, the response "data" field is unmarshaled into it.
+// DoForm sends params as application/x-www-form-urlencoded.
 func (c *Client) DoForm(method, path string, body map[string]string, result interface{}) error {
-	u, err := url.Parse(c.BaseURL + "/" + strings.TrimLeft(path, "/"))
+	u, err := c.url(path, nil)
 	if err != nil {
-		return fmt.Errorf("invalid URL: %w", err)
+		return err
 	}
-
 	form := url.Values{}
 	for k, v := range body {
-		if v != "" {
-			form.Set(k, v)
-		}
+		form.Set(k, v)
 	}
-	encoded := form.Encode()
-
-	if c.Verbose {
-		fmt.Printf(">> %s %s (form body, %d bytes)\n", method, u.String(), len(encoded))
-	}
-
-	req, err := http.NewRequest(method, u.String(), strings.NewReader(encoded))
+	req, err := http.NewRequest(method, u, strings.NewReader(form.Encode()))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("create request: %w", err)
 	}
-
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.setAuth(req)
+	return c.send(req, result)
+}
+
+// DoJSON sends the body as application/json. body may be nil for no payload.
+func (c *Client) DoJSON(method, path string, body []byte, result interface{}) error {
+	u, err := c.url(path, nil)
+	if err != nil {
+		return err
+	}
+	var r io.Reader
+	if len(body) > 0 {
+		r = bytes.NewReader(body)
+	}
+	req, err := http.NewRequest(method, u, r)
+	if err != nil {
+		return fmt.Errorf("create request: %w", err)
+	}
+	if len(body) > 0 {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	req.Header.Set("Accept", "application/json")
+	c.setAuth(req)
+	return c.send(req, result)
+}
+
+func (c *Client) url(path string, params map[string]string) (string, error) {
+	u, err := url.Parse(c.BaseURL + "/" + strings.TrimLeft(path, "/"))
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
+	}
+	if len(params) > 0 {
+		q := u.Query()
+		for k, v := range params {
+			if v != "" {
+				q.Set(k, v)
+			}
+		}
+		u.RawQuery = q.Encode()
+	}
+	return u.String(), nil
+}
+
+func (c *Client) setAuth(req *http.Request) {
 	if c.Token != "" {
 		req.Header.Set("X-Auth-Token", c.Token)
 	}
-
-	return c.do(req, result)
 }
 
-func (c *Client) do(req *http.Request, result interface{}) error {
+func (c *Client) send(req *http.Request, result interface{}) error {
+	if c.Verbose {
+		fmt.Printf(">> %s %s\n", req.Method, req.URL.String())
+	}
+
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
@@ -105,7 +120,7 @@ func (c *Client) do(req *http.Request, result interface{}) error {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
+		return fmt.Errorf("read response: %w", err)
 	}
 
 	if c.Verbose {
@@ -113,10 +128,9 @@ func (c *Client) do(req *http.Request, result interface{}) error {
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		return &APIError{StatusCode: 401, Message: "authentication required — run 'acmctl login' or set --token"}
+		return &APIError{StatusCode: 401, Message: "authentication required — run 'acmctl login' or set ACMCTL_TOKEN"}
 	}
 
-	// Handle empty response body
 	trimmed := strings.TrimSpace(string(body))
 	if trimmed == "" || trimmed == "null" {
 		if resp.StatusCode >= 400 {
@@ -125,34 +139,30 @@ func (c *Client) do(req *http.Request, result interface{}) error {
 		return nil
 	}
 
-	var envelope models.APIResponse
-	if err := json.Unmarshal(body, &envelope); err != nil {
-		// Response is not in envelope format — try direct unmarshal or return error
+	// Try envelope format first: {"data": ..., "error": ...}
+	var envelope struct {
+		Data  json.RawMessage `json:"data"`
+		Error *string         `json:"error"`
+	}
+	if err := json.Unmarshal(body, &envelope); err == nil {
+		if envelope.Error != nil && *envelope.Error != "" {
+			return &APIError{StatusCode: resp.StatusCode, Message: *envelope.Error}
+		}
 		if resp.StatusCode >= 400 {
 			return &APIError{StatusCode: resp.StatusCode, Message: trimmed}
 		}
-		// Try to unmarshal directly into result for non-envelope responses
-		if result != nil {
-			if directErr := json.Unmarshal(body, result); directErr == nil {
-				return nil
-			}
+		if result != nil && envelope.Data != nil {
+			return json.Unmarshal(envelope.Data, result)
 		}
-		return fmt.Errorf("failed to parse response: %w", err)
+		return nil
 	}
 
-	if envelope.Error != nil && *envelope.Error != "" {
-		return &APIError{StatusCode: resp.StatusCode, Message: *envelope.Error}
-	}
-
+	// Non-envelope response
 	if resp.StatusCode >= 400 {
 		return &APIError{StatusCode: resp.StatusCode, Message: trimmed}
 	}
-
-	if result != nil && envelope.Data != nil {
-		if err := json.Unmarshal(envelope.Data, result); err != nil {
-			return fmt.Errorf("failed to parse response data: %w", err)
-		}
+	if result != nil {
+		return json.Unmarshal(body, result)
 	}
-
 	return nil
 }

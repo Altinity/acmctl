@@ -1,3 +1,5 @@
 acmctl
 acmctl-*
 .claude/
+.env
+.env.*

@@ -10,12 +10,13 @@ import (
 )
 
 var (
-	cfgFile   string
-	tokenFlag string
-	urlFlag   string
-	verbose   bool
-	cfg       *config.Config
-	apiClient *api.Client
+	cfgFile    string
+	outputFmt  string
+	tokenFlag  string
+	urlFlag    string
+	verbose    bool
+	cfg        *config.Config
+	apiClient  *api.Client
 )
 
 var rootCmd = &cobra.Command{
@@ -45,6 +46,9 @@ var rootCmd = &cobra.Command{
 		} else if envURL := os.Getenv("ACMCTL_URL"); envURL != "" {
 			cfg.URL = envURL
 		}
+		if outputFmt != "" {
+			cfg.Output = outputFmt
+		}
 
 		apiClient = api.NewClient(cfg.URL, cfg.Token)
 		apiClient.Verbose = verbose
@@ -61,6 +65,7 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", config.DefaultPath(), "config file path")
+	rootCmd.PersistentFlags().StringVarP(&outputFmt, "output", "o", "", "output format: table, json, yaml")
 	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "API token (overrides config)")
 	rootCmd.PersistentFlags().StringVar(&urlFlag, "url", "", "API base URL (overrides config)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
