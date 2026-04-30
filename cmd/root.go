@@ -10,12 +10,14 @@ import (
 )
 
 var (
-	cfgFile   string
-	tokenFlag string
-	urlFlag   string
-	verbose   bool
-	cfg       *config.Config
-	apiClient *api.Client
+	cfgFile        string
+	tokenFlag      string
+	urlFlag        string
+	profileFlag    string
+	verbose        bool
+	cfg            *config.Config
+	apiClient      *api.Client
+	activeProfile  string // resolved profile name; "" before PersistentPreRunE
 )
 
 var rootCmd = &cobra.Command{
@@ -42,21 +44,46 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		// Flag/env overrides
-		if tokenFlag != "" {
-			cfg.Token = tokenFlag
-		} else if envToken := os.Getenv("ACM_API_KEY"); envToken != "" {
-			cfg.Token = envToken
+		// Resolve the active profile (flag > env > default_profile >
+		// single-profile fallback).
+		profile, name, perr := cfg.ActiveProfile(profileFlag)
+
+		// If the user EXPLICITLY selected a profile that doesn't
+		// exist (--profile <name> or ACMCTL_PROFILE=<name>), fail
+		// here with a clear error. If they made no selection and
+		// there's no fallback, defer the error to commands that need
+		// a profile via requireProfile() — `config list/add-profile`
+		// must keep working on empty configs.
+		if perr != nil {
+			explicit := profileFlag != "" || os.Getenv("ACMCTL_PROFILE") != ""
+			if explicit {
+				return perr
+			}
+			activeProfile = ""
+		} else {
+			activeProfile = name
 		}
+
+		// Compose effective URL/token: flag > env > active profile.
+		url := profile.URL
 		if urlFlag != "" {
-			cfg.URL = urlFlag
+			url = urlFlag
 		} else if envURL := os.Getenv("ACMCTL_URL"); envURL != "" {
-			cfg.URL = envURL
+			url = envURL
+		}
+		if url == "" {
+			url = config.DefaultURL
 		}
 
-		apiClient = api.NewClient(cfg.URL, cfg.Token)
-		apiClient.Verbose = verbose
+		token := profile.Token
+		if tokenFlag != "" {
+			token = tokenFlag
+		} else if envToken := os.Getenv("ACM_API_KEY"); envToken != "" {
+			token = envToken
+		}
 
+		apiClient = api.NewClient(url, token)
+		apiClient.Verbose = verbose
 		return nil
 	},
 }
@@ -68,12 +95,25 @@ func Execute() {
 }
 
 func init() {
-	// Default is ~/.acmctl.yaml; degrade to "" if HOME isn't set so
-	// the user gets a clearer "config not found" message at load time
-	// than a startup panic from init.
 	defaultCfg, _ := config.DefaultPath()
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", defaultCfg, "config file path")
-	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "API token (overrides config)")
-	rootCmd.PersistentFlags().StringVar(&urlFlag, "url", "", "API base URL (overrides config)")
+	rootCmd.PersistentFlags().StringVar(&profileFlag, "profile", "",
+		"profile name to use (default: $ACMCTL_PROFILE or default_profile in config)")
+	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "API token (overrides config + env)")
+	rootCmd.PersistentFlags().StringVar(&urlFlag, "url", "", "API base URL (overrides config + env)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+}
+
+// requireProfile returns the active profile name or a clear error
+// for commands that strictly require one (cluster list, env get,
+// etc.). Use this inside a RunE before touching apiClient on a path
+// that needs a real URL+token.
+func requireProfile() (string, error) {
+	if activeProfile == "" {
+		return "", fmt.Errorf("no profile selected — pass --profile, set ACMCTL_PROFILE, or run `acmctl config use-profile <name>`")
+	}
+	if cfg == nil || cfg.Profiles[activeProfile].URL == "" {
+		return activeProfile, fmt.Errorf("profile %q has no url set; edit %s or run `acmctl config add-profile %s --url <url>`", activeProfile, cfgFile, activeProfile)
+	}
+	return activeProfile, nil
 }
