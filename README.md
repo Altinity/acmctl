@@ -1,17 +1,49 @@
 # acmctl
 
-Slim CLI for the [Altinity Cloud Manager API](https://acm.altinity.cloud/docs/).
+Slim CLI for the [Altinity Cloud Manager API](https://acm.altinity.cloud/docs/),
+paired with an `altinity-cloud` Claude Code skill for agent use.
+
+## Who uses what
+
+| Caller | Path |
+|---|---|
+| Human at a terminal | `acmctl` directly |
+| Bash script / CI | `acmctl` — stable interface, JSON output, single binary |
+| Agent in Claude Code | `altinity-cloud` skill — curl-direct with workflow recipes |
+
+The skill and the CLI both hit the same API; pick whichever has lower
+overhead for your context. Agents save tokens by skipping `--help` and
+calling `curl` directly with the patterns the skill provides; humans get
+discoverability and tab completion from `acmctl`.
 
 ## Design
 
-acmctl exposes a small set of high-touch commands (login, env list/get, cluster
-list/get/launch/update/delete/temp-creds) plus a generic `raw` passthrough for
-the rest of the API. The full hand-curated mapping of all 269 endpoints is
-preserved in `_legacy/` as reference material.
+acmctl exposes a small set of high-touch commands — login, env list/get,
+cluster list/get/launch/update/delete/temp-creds — plus a generic `raw`
+passthrough for the rest of the API. All output is JSON.
 
-For agent use, the `altinity-cloud` Claude Code skill in this repo's
-`.claude/skills/` is the recommended path — it teaches the agent to call the
-API directly with curl, with workflow recipes and a per-tag endpoint digest.
+The full hand-curated mapping of all 269 endpoints is preserved in `_legacy/`
+as reference material — Go's toolchain ignores `_`-prefixed dirs, so it stays
+greppable without participating in the build. Cherry-pick from there if a
+specific tier-2 endpoint becomes hot enough to warrant typing.
+
+## The companion skill
+
+The `altinity-cloud` skill lives in this repo at
+`.claude/skills/altinity-cloud/`. `.gitignore` excludes the rest of
+`.claude/` (machine-local settings) but allows `.claude/skills/`
+through. Contents:
+
+- `SKILL.md` — auth setup, curl helper, common operations, conventions
+- `resources/endpoints.md` — index pointing to per-tag files
+- `resources/endpoints/<tag>.md` — 20 per-tag endpoint digests (clusters,
+  environments, billing, …)
+- `resources/workflows.md` — multi-step recipes (launch-and-wait,
+  diagnose-slow-query, …)
+
+Loaded lazily by Claude Code — ~30 tokens of static context until triggered.
+When triggered, ~1.1KB of guidance loads. Tier-2 endpoint files load only
+when the agent needs an obscure operation.
 
 ## Installation
 
