@@ -1,8 +1,6 @@
 acmctl
 acmctl-*
-# Ignore .claude/ but allow the bundled skill(s).
-.claude/*
-!.claude/skills/
+.claude/
 .env
 .env.*
 .idea/

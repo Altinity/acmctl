@@ -30,20 +30,25 @@ specific tier-2 endpoint becomes hot enough to warrant typing.
 ## The companion skill
 
 The `altinity-cloud` skill lives in this repo at
-`.claude/skills/altinity-cloud/`. `.gitignore` excludes the rest of
-`.claude/` (machine-local settings) but allows `.claude/skills/`
-through. Contents:
+`skills/altinity-cloud/`. Contents:
 
-- `SKILL.md` — auth setup, curl helper, common operations, conventions
-- `resources/endpoints.md` — index pointing to per-tag files
-- `resources/endpoints/<tag>.md` — 20 per-tag endpoint digests (clusters,
+- `SKILL.md` — setup, common ops, conventions, per-tag index
+- `endpoints/<tag>.md` — 20 per-tag endpoint digests (clusters,
   environments, billing, …)
-- `resources/workflows.md` — multi-step recipes (launch-and-wait,
+- `workflows.md` — multi-step recipes (launch-and-wait,
   diagnose-slow-query, …)
 
-Loaded lazily by Claude Code — ~30 tokens of static context until triggered.
-When triggered, ~1.1KB of guidance loads. Tier-2 endpoint files load only
-when the agent needs an obscure operation.
+Loaded lazily by Claude Code — ~30 tokens of static context until
+triggered. When triggered, ~3 KB of guidance loads. Per-tag files
+load only when the agent needs an endpoint outside the common-ops
+list in SKILL.md.
+
+To use from a Claude Code sandbox, symlink it into the user's skills
+directory:
+
+```bash
+ln -s /path/to/acmctl/skills/altinity-cloud ~/.claude/skills/altinity-cloud
+```
 
 ## Installation
 
