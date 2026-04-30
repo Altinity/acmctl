@@ -84,11 +84,21 @@ func Install(b *Bundle, opts InstallOpts) (Summary, error) {
 	// it and clobber the link's target. Remove the symlink before
 	// touching anything below; the file loop will then create a
 	// real directory and write fresh contents.
+	//
+	// dirIsSymlink also drives the dry-run path inside the loop: when
+	// dstRoot is still a symlink at lstat time (because dry-run skipped
+	// the Remove), per-file Lstat calls would follow the intermediate
+	// symlink and return the existing target's contents — making the
+	// dry-run report "unchanged" for files that a real run would
+	// create fresh. Treat them as ReplacedSymlink/Created instead.
+	dirIsSymlink := false
 	if li, err := os.Lstat(dstRoot); err == nil && li.Mode()&fs.ModeSymlink != 0 {
+		dirIsSymlink = true
 		if !opts.DryRun {
 			if rerr := os.Remove(dstRoot); rerr != nil {
 				return Summary{}, fmt.Errorf("remove symlink at skill dir %s: %w", dstRoot, rerr)
 			}
+			dirIsSymlink = false // it's gone now; loop sees a fresh dir
 		}
 	}
 
@@ -105,6 +115,11 @@ func Install(b *Bundle, opts InstallOpts) (Summary, error) {
 		src := b.Files[rel]
 
 		// Symlink guard before any write; never follow.
+		// Two ways the file is "behind" a symlink:
+		//   (a) the file itself is a symlink — Lstat reports it.
+		//   (b) the parent dir is a symlink — handled by the
+		//       dirIsSymlink flag above (only matters in dry-run,
+		//       since a real run already removed it).
 		replacedSymlink := false
 		if li, err := os.Lstat(dst); err == nil && li.Mode()&fs.ModeSymlink != 0 {
 			if !opts.DryRun {
@@ -115,7 +130,16 @@ func Install(b *Bundle, opts InstallOpts) (Summary, error) {
 			replacedSymlink = true
 		}
 
-		existing, err := os.ReadFile(dst)
+		// In dry-run with a dir-level symlink, skip the read so we
+		// don't resolve through it and report misleading "unchanged".
+		var existing []byte
+		var err error
+		if dirIsSymlink && opts.DryRun {
+			err = fs.ErrNotExist
+			replacedSymlink = true
+		} else {
+			existing, err = os.ReadFile(dst)
+		}
 		switch {
 		case errors.Is(err, fs.ErrNotExist) || replacedSymlink:
 			if !opts.DryRun {

@@ -28,7 +28,7 @@ var envListCmd = &cobra.Command{
 var envGetCmd = &cobra.Command{
 	Use:   "get <id>",
 	Short: "Get environment details",
-	Args:  cobra.ExactArgs(1),
+	Args:  integerIDArg(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var raw json.RawMessage
 		if err := apiClient.Do("GET", fmt.Sprintf("/environment/%s", args[0]), nil, &raw); err != nil {

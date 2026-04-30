@@ -1,6 +1,8 @@
 package config
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -15,9 +17,17 @@ type Config struct {
 	Output string `yaml:"output"`
 }
 
-func DefaultPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".acmctl.yaml")
+// DefaultPath returns ~/.acmctl.yaml. Returns an error rather than
+// silently swallowing a missing $HOME — that condition normally only
+// happens in pathological environments (locked-down containers,
+// misconfigured CI runners), but the config command is the wrong
+// place to silently degrade.
+func DefaultPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("resolve home dir: %w", err)
+	}
+	return filepath.Join(home, ".acmctl.yaml"), nil
 }
 
 func Load(path string) (*Config, error) {
@@ -32,8 +42,14 @@ func Load(path string) (*Config, error) {
 		}
 		return nil, err
 	}
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return nil, err
+	// KnownFields(true) catches typos like `urls:` instead of `url:`
+	// in the user's config — without it, an unknown key silently
+	// leaves the struct field at its default and the user is left
+	// wondering why their override didn't take effect.
+	dec := yaml.NewDecoder(bytes.NewReader(data))
+	dec.KnownFields(true)
+	if err := dec.Decode(cfg); err != nil {
+		return nil, fmt.Errorf("parse %s: %w", path, err)
 	}
 	if cfg.URL == "" {
 		cfg.URL = DefaultURL

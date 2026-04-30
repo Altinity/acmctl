@@ -31,7 +31,9 @@ Don't include the host or /api/ prefix.`,
 		method := strings.ToUpper(args[0])
 		path := args[1]
 
-		fields, _ := cmd.Flags().GetStringSlice("field")
+		// Use StringArray (not StringSlice) so values aren't split on
+		// commas — `-F query='SELECT 1, 2'` should be one field, not two.
+		fields, _ := cmd.Flags().GetStringArray("field")
 
 		stdinPiped := !isatty(os.Stdin)
 		hasFields := len(fields) > 0
@@ -104,6 +106,6 @@ func parseFormFields(fields []string) (map[string]string, error) {
 }
 
 func init() {
-	rawCmd.Flags().StringSliceP("field", "F", nil, "form field key=value (repeatable; @file loads from disk)")
+	rawCmd.Flags().StringArrayP("field", "F", nil, "form field key=value (repeatable; @file loads from disk; values are NOT split on commas)")
 	rootCmd.AddCommand(rawCmd)
 }
