@@ -3,3 +3,4 @@ acmctl-*
 .claude/
 .env
 .env.*
+.idea/
