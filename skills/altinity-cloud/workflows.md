@@ -1,57 +1,56 @@
 # ACM Multi-Step Workflows
 
-Assumes `ACM_TOKEN`, `ACM_URL`, and the `acm()` helper from SKILL.md are set up.
+Assumes `acmctl` is authenticated and available on `PATH`.
 
 ## Launch a cluster and wait until ready
 
 ```bash
-ENV=$(acm GET /environments | jq '.[0].id')
+ENV=$(acmctl env list | jq '.[0].id')
 
-CLUSTER=$(acm POST /environment/$ENV/clusters/launch \
-  --data-urlencode "name=test-cluster" \
-  --data-urlencode "nodeType=s1" \
-  --data-urlencode "version=24.3" \
-  | jq -r '.id')
+CLUSTER=$(cat <<'JSON' | acmctl cluster launch "$ENV" | jq -r '.id'
+{ "name": "test-cluster", "nodeType": "s1", "version": "24.3" }
+JSON
+)
 
 # Poll status until uptime > 0 (means it's accepting connections)
-until [ "$(acm GET /cluster/$CLUSTER/status | jq '.uptime // 0')" -gt 0 ]; do
+until [ "$(acmctl raw GET /cluster/$CLUSTER/status | jq '.uptime // 0')" -gt 0 ]; do
   sleep 15
 done
 
 # Get connection info
-acm GET /cluster/$CLUSTER
+acmctl cluster get "$CLUSTER"
 
 # Optional: get temp creds for Altinity-side debugging
-acm GET /cluster/$CLUSTER/support/credentials
+acmctl cluster temp-creds "$CLUSTER"
 ```
 
 ## Diagnose a slow / failing query
 
 ```bash
 # 1. Cluster health
-acm GET /cluster/$ID/status
+acmctl raw GET /cluster/$ID/status
 
 # 2. Find recent errors per node
-acm GET /cluster/$ID/errors
+acmctl raw GET /cluster/$ID/errors
 
 # 3. List slow running queries
-acm GET /cluster/$ID/workload-queries \
+acmctl raw GET /cluster/$ID/workload-queries \
   | jq '.[] | select(.elapsed > 10) | {query_id, query, elapsed, node}'
 
 # 4. Drill into a specific query
-acm GET /cluster/$ID/workload-query/$QUERY_ID
+acmctl raw GET /cluster/$ID/workload-query/$QUERY_ID
 
 # 5. Kill if needed
-acm POST /cluster/$ID/query-kill \
-  --data-urlencode "queryIds=$QUERY_ID" \
-  --data-urlencode "node=$NODE"
+acmctl raw POST /cluster/$ID/query-kill \
+  -F queryIds="$QUERY_ID" \
+  -F node="$NODE"
 ```
 
 ## Refresh Altinity support access
 
 ```bash
-acm POST /cluster/$ID/support/refresh
-resp=$(acm GET /cluster/$ID/support/credentials)
+acmctl raw POST /cluster/$ID/support/refresh
+resp=$(acmctl cluster temp-creds "$ID")
 
 # Response shape varies — see SKILL.md "Conventions". Handle both:
 user=$(echo "$resp" | jq -r 'if type == "object" then .login // empty else empty end')
@@ -62,32 +61,31 @@ pass=$(echo "$resp" | jq -r 'if type == "object" then .password else . end')
 ## Restore a cluster from S3 backup
 
 ```bash
-acm POST /cluster/$ID/restore \
-  --data-urlencode "type=s3" \
-  --data-urlencode "bucket=my-backup-bucket" \
-  --data-urlencode "path=/backups/2026-04-29" \
-  --data-urlencode "accessKey=$AWS_ACCESS_KEY" \
-  --data-urlencode "secretKey=$AWS_SECRET_KEY" \
-  --data-urlencode "region=us-east-1"
+acmctl raw POST /cluster/$ID/restore \
+  -F type=s3 \
+  -F bucket=my-backup-bucket \
+  -F path=/backups/2026-04-29 \
+  -F accessKey="$AWS_ACCESS_KEY" \
+  -F secretKey="$AWS_SECRET_KEY" \
+  -F region=us-east-1
 
 # If it fails partway, retry without redownloading already-fetched parts
-acm POST /cluster/$ID/restore-retry --data-urlencode "skipDownload=1"
+acmctl raw POST /cluster/$ID/restore-retry -F skipDownload=1
 ```
 
 ## Apply a large XML setting (Kafka config, custom XML)
 
 ```bash
 # @file syntax loads from disk
-acm POST /cluster/$ID/kafka-configuration \
-  --data-urlencode "filename=kafka.xml" \
-  --data-urlencode "xml@./kafka-config.xml"
+acmctl raw POST /cluster/$ID/kafka-configuration \
+  -F filename=kafka.xml \
+  -F xml=@./kafka-config.xml
 ```
 
 ## Bulk update cluster settings via field map
 
 ```bash
-acm POST /cluster/$ID \
-  --data-urlencode "alertsEmail=ops@example.com" \
-  --data-urlencode "ipWhitelist=10.0.0.0/8" \
-  --data-urlencode "uptime=24x7"
+cat <<'JSON' | acmctl cluster update "$ID"
+{ "alertsEmail": "ops@example.com", "ipWhitelist": "10.0.0.0/8", "uptime": "24x7" }
+JSON
 ```

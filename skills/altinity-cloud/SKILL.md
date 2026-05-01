@@ -12,13 +12,12 @@ fallback for everything else.
 
 ## Setup
 
-`acmctl` reads `ACM_API_KEY` from env (set by iso from
-`[users.<name>.auth]` via 1Password, or by acm-shell after
-`acm_resolve_acm_api_key`). Nothing to do at session start — just
-verify it's set:
+`acmctl` uses the active profile in `~/.acmctl.yaml`. Override with
+`--config`, `--token`, or `--url` when needed. Nothing to do at session
+start — just verify the CLI resolves and the profile is authenticated:
 
 ```bash
-[ -n "$ACM_API_KEY" ] || echo "no ACM token — run via iso-acm/acm or set ACM_API_KEY manually" >&2
+acmctl version
 ```
 
 URL defaults to `https://acm.altinity.cloud/api/`. Override with `--url` or
@@ -46,6 +45,9 @@ acmctl raw POST   /cluster/337/backup
 acmctl raw POST   /cluster/337/query -F query='SELECT 1' -F user=admin
 acmctl raw POST   /cluster/337/kafka-configuration -F xml=@./kafka.xml
 acmctl raw DELETE /cluster/337/0             # last segment: 0=keep resources, 1=terminate
+acmctl raw GET    /cluster/337/settings
+acmctl raw POST   /cluster/337/settings -F name=config.d/http_handlers.xml -F value=@./http_handlers.xml
+acmctl raw POST   /cluster/337/push
 ```
 
 `acmctl raw` body shape is auto-detected:
@@ -73,6 +75,11 @@ Combining stdin JSON with `-F` is an error.
 
 - **Auth failure**: 401 → token expired or wrong. Don't try to refresh
   tokens programmatically; tell the user.
+
+- **Settings API**: there is no dedicated `acmctl setting` subcommand in
+  this build. Use `acmctl raw GET /cluster/{id}/settings` to inspect and
+  `acmctl raw POST /cluster/{id}/settings` to add settings, then
+  `acmctl raw POST /cluster/{id}/push` to reconcile.
 
 - **Pagination**: a handful of endpoints accept `page` / `limit` query
   params (audit logs, account log, console logs, console tasks). Most
