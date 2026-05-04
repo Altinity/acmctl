@@ -43,12 +43,16 @@ var clusterListCmd = &cobra.Command{
 	Short: "List all clusters",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		envFilter, _ := cmd.Flags().GetString("env")
-		var raw json.RawMessage
-		if err := apiClient.Do("GET", "/clusters", nil, &raw); err != nil {
-			return err
-		}
+		path := "/clusters"
 		if envFilter != "" {
-			return printFiltered(raw, envFilter)
+			if !integerIDRegexp.MatchString(envFilter) {
+				return fmt.Errorf("--env: expected integer ID, got %q", envFilter)
+			}
+			path = fmt.Sprintf("/environment/%s/clusters", envFilter)
+		}
+		var raw json.RawMessage
+		if err := apiClient.Do("GET", path, nil, &raw); err != nil {
+			return err
 		}
 		return printJSON(raw)
 	},
@@ -174,7 +178,7 @@ func readStdinJSON() ([]byte, error) {
 }
 
 func init() {
-	clusterListCmd.Flags().String("env", "", "filter by environment ID (client-side)")
+	clusterListCmd.Flags().String("env", "", "list clusters in environment ID")
 	clusterDeleteCmd.Flags().Bool("terminate", false, "terminate cluster resources")
 
 	clusterCmd.AddCommand(clusterListCmd)
