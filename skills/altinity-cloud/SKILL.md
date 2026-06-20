@@ -39,22 +39,27 @@ acmctl cluster update 337 < update.json
 acmctl cluster delete 337 [--terminate]
 acmctl cluster temp-creds 337                # mint Altinity-support creds
 
+# Config settings (config.d files + server settings), then apply
+acmctl cluster settings list 337             # id, kind, name
+acmctl cluster settings get 337 config.d/http_handlers.xml
+acmctl cluster settings set 337 config.d/http_handlers.xml --file ./http_handlers.xml
+acmctl cluster settings rm  337 config.d/http_handlers.xml
+acmctl cluster push 337                       # apply staged settings (may restart CH)
+
 # Catch-all for everything else (270+ endpoints)
 acmctl raw GET    /cluster/337/status
 acmctl raw POST   /cluster/337/backup
 acmctl raw POST   /cluster/337/query -F query='SELECT 1' -F user=admin
 acmctl raw POST   /cluster/337/kafka-configuration -F xml=@./kafka.xml
 acmctl raw DELETE /cluster/337/0             # last segment: 0=keep resources, 1=terminate
-acmctl raw GET    /cluster/337/settings
-acmctl raw POST   /cluster/337/settings -F name=config.d/http_handlers.xml -F value=@./http_handlers.xml
-acmctl raw POST   /cluster/337/push
 ```
 
-`acmctl raw` body shape is auto-detected:
-- **stdin JSON** → `application/json`
+`acmctl raw` body shape is auto-detected (for POST/PUT/PATCH only):
+- **stdin JSON** (a pipe or file) → `application/json`
 - **`-F key=value`** flags → `application/x-www-form-urlencoded`
 - **neither** → no body
 
+GET/DELETE never read stdin, so bodyless calls don't block in scripts.
 Combining stdin JSON with `-F` is an error.
 
 ## Conventions you must know
@@ -76,10 +81,11 @@ Combining stdin JSON with `-F` is an error.
 - **Auth failure**: 401 → token expired or wrong. Don't try to refresh
   tokens programmatically; tell the user.
 
-- **Settings API**: there is no dedicated `acmctl setting` subcommand in
-  this build. Use `acmctl raw GET /cluster/{id}/settings` to inspect and
-  `acmctl raw POST /cluster/{id}/settings` to add settings, then
-  `acmctl raw POST /cluster/{id}/push` to reconcile.
+- **Settings**: use `acmctl cluster settings {list,get,set,rm}`, then
+  `acmctl cluster push <id>` to apply (may restart ClickHouse).
+  `settings set <id> <name>` is idempotent by name — updates in place if it
+  exists, else creates it (inferring `isFile` from the name). There is no
+  GET-by-id endpoint, so `get`/`rm` by name list-and-filter under the hood.
 
 - **Pagination**: a handful of endpoints accept `page` / `limit` query
   params (audit logs, account log, console logs, console tasks). Most
