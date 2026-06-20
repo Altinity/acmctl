@@ -87,6 +87,13 @@ Combining stdin JSON with `-F` is an error.
   exists, else creates it (inferring `isFile` from the name). There is no
   GET-by-id endpoint, so `get`/`rm` by name list-and-filter under the hood.
 
+- **Deletions are lazy (ACM-side).** `rm` removes the setting from the cluster's
+  desired state immediately, but `push` only re-renders the config (and restarts
+  ClickHouse) when the push contains an **add or change** — a delete-only push is
+  a no-op on the running cluster, so the `config.d` file lingers until the next
+  real change re-renders the config. To purge a file *now*, pair the `rm` with any
+  `set` (or a node restart) before `push`. Adds/updates apply promptly.
+
 - **Pagination**: a handful of endpoints accept `page` / `limit` query
   params (audit logs, account log, console logs, console tasks). Most
   don't — assume not unless the per-tag digest says otherwise.

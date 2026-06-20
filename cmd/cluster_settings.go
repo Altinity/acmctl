@@ -190,7 +190,14 @@ var clusterSettingsRmCmd = &cobra.Command{
 	Use:     "rm <cluster-id> <name|id>",
 	Aliases: []string{"delete"},
 	Short:   "Delete a setting (resolved by name or id)",
-	Args:    cobra.ExactArgs(2),
+	Long: `Delete a cluster setting (resolved by name or id).
+
+Removes it from the cluster's desired state immediately. NOTE: a subsequent
+delete-only 'cluster push' is a no-op on the running cluster — ACM re-renders
+config (and restarts ClickHouse) only when a push contains an add/change. So
+the config.d file lingers until the next real change re-renders the config. To
+purge it now, pair the rm with any 'set' before pushing, or restart the node.`,
+	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := requireIntID("cluster-id", args[0]); err != nil {
 			return err
