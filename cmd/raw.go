@@ -35,7 +35,12 @@ Don't include the host or /api/ prefix.`,
 		// commas — `-F query='SELECT 1, 2'` should be one field, not two.
 		fields, _ := cmd.Flags().GetStringArray("field")
 
-		stdinPiped := !isatty(os.Stdin)
+		// Only methods that carry a body read stdin, and only when stdin is a
+		// pipe/file (not a terminal or /dev/null). This is what stops a bodyless
+		// `raw GET …` from hanging forever on io.ReadAll(stdin) in scripts/CI
+		// where stdin is an open pipe that never EOFs.
+		methodTakesBody := method == "POST" || method == "PUT" || method == "PATCH"
+		stdinPiped := methodTakesBody && stdinHasBody()
 		hasFields := len(fields) > 0
 
 		if stdinPiped && hasFields {
