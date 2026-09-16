@@ -10,14 +10,14 @@ import (
 )
 
 var (
-	cfgFile        string
-	tokenFlag      string
-	urlFlag        string
-	profileFlag    string
-	verbose        bool
-	cfg            *config.Config
-	apiClient      *api.Client
-	activeProfile  string // resolved profile name; "" before PersistentPreRunE
+	cfgFile       string
+	tokenFlag     string
+	urlFlag       string
+	profileFlag   string
+	verbose       bool
+	cfg           *config.Config
+	apiClient     *api.Client
+	activeProfile string // resolved profile name; "" before PersistentPreRunE
 )
 
 var rootCmd = &cobra.Command{
