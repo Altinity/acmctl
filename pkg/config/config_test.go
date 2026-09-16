@@ -226,6 +226,29 @@ func TestSetRemoveProfile(t *testing.T) {
 	}
 }
 
+func TestDefaultPathHonoursEnv(t *testing.T) {
+	t.Setenv("ACMCTL_CONFIG", "/etc/acmctl/config.yaml")
+	got, err := DefaultPath()
+	if err != nil {
+		t.Fatalf("DefaultPath: %v", err)
+	}
+	if got != "/etc/acmctl/config.yaml" {
+		t.Errorf("got %q, want the ACMCTL_CONFIG value", got)
+	}
+}
+
+func TestDefaultPathFallsBackToHome(t *testing.T) {
+	t.Setenv("ACMCTL_CONFIG", "")
+	t.Setenv("HOME", "/tmp/acmctl-home")
+	got, err := DefaultPath()
+	if err != nil {
+		t.Fatalf("DefaultPath: %v", err)
+	}
+	if !contains(got, ".acmctl.yaml") {
+		t.Errorf("got %q, want the ~/.acmctl.yaml default", got)
+	}
+}
+
 func contains(s, sub string) bool {
 	for i := 0; i+len(sub) <= len(s); i++ {
 		if s[i:i+len(sub)] == sub {

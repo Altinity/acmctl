@@ -54,6 +54,12 @@ type Config struct {
 // happens in pathological environments (locked-down containers,
 // misconfigured CI runners).
 func DefaultPath() (string, error) {
+	// ACMCTL_CONFIG lets callers move the config off $HOME without threading
+	// --config through every invocation. Containers need this: when $HOME is a
+	// mounted working directory, the default would write the token into it.
+	if p := os.Getenv("ACMCTL_CONFIG"); p != "" {
+		return p, nil
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("resolve home dir: %w", err)
