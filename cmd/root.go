@@ -96,7 +96,8 @@ func Execute() {
 
 func init() {
 	defaultCfg, _ := config.DefaultPath()
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", defaultCfg, "config file path")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", defaultCfg,
+		"config file path (default: $ACMCTL_CONFIG or ~/.acmctl.yaml)")
 	rootCmd.PersistentFlags().StringVar(&profileFlag, "profile", "",
 		"profile name to use (default: $ACMCTL_PROFILE or default_profile in config)")
 	rootCmd.PersistentFlags().StringVar(&tokenFlag, "token", "", "API token (overrides config + env)")
