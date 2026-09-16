@@ -29,7 +29,7 @@ import (
 // as `http://localhost:<port>/cb`. Auth0 doesn't honor RFC 8252's
 // wildcard-port suggestion; redirect_uri matching is exact.
 const (
-	auth0Domain    = "altinity.auth0.com"
+	auth0Domain = "altinity.auth0.com"
 	// Native Auth0 application dedicated to acmctl (PKCE-only,
 	// no client_secret, no use of refresh tokens for now).
 	// Distinct from the web UI's "Regular Web Application" client.

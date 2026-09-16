@@ -28,8 +28,8 @@ type Profile struct {
 //  1. Profile-based (preferred):
 //     default_profile: prod
 //     profiles:
-//       prod: { url: ..., token: ... }
-//       dev:  { url: ..., token: ... }
+//     prod: { url: ..., token: ... }
+//     dev:  { url: ..., token: ... }
 //
 //  2. Legacy flat (read-only on the way in; never written back):
 //     url: ...

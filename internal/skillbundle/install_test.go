@@ -13,7 +13,7 @@ func makeBundle() *Bundle {
 	return &Bundle{
 		Skill: "altinity-cloud",
 		Files: map[string][]byte{
-			"SKILL.md":             []byte("# skill v1\n"),
+			"SKILL.md":              []byte("# skill v1\n"),
 			"endpoints/clusters.md": []byte("# clusters\n"),
 		},
 	}

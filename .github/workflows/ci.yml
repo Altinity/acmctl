@@ -1,0 +1,56 @@
+name: CI
+
+# Build, vet and test on every push and pull request. The expert container
+# image cross-compiles this binary for linux/amd64 and linux/arm64, so those
+# targets are built here too - a platform-specific break should fail in CI,
+# not in an image build.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l . | grep -v '^_legacy/' || true)"
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - run: go vet ./...
+
+      - run: go test ./... -race
+
+      - name: Build for every target the expert image ships
+        run: |
+          for target in linux/amd64 linux/arm64 darwin/arm64 darwin/amd64; do
+            echo "building $target"
+            GOOS="${target%/*}" GOARCH="${target#*/}" CGO_ENABLED=0 \
+              go build -trimpath -ldflags='-s -w' -o /dev/null .
+          done
+
+      - name: Smoke test the native binary
+        run: |
+          go build -o acmctl .
+          ./acmctl --help | grep -q 'ACMCTL_CONFIG'
+          ./acmctl version
