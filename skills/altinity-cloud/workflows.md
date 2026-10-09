@@ -24,6 +24,57 @@ acmctl cluster get "$CLUSTER"
 acmctl cluster temp-creds "$CLUSTER"
 ```
 
+## Launch a cluster on ClickHouse Keeper (instead of ZooKeeper)
+
+Whether a launch uses Keeper is decided by the **payload**, not by the environment
+flag alone: the UI sends `keeperOptions` when the environment has `useKeeper` (or
+`useClickHouseAPIv2`) on, and `zookeeper: "launch"` otherwise. Over the API you must
+send the right one yourself. A launch with neither is rejected
+(`Either CH Keeper or Zookeeper options must be specified.`).
+
+```bash
+ENV=426
+
+# 1. Is Keeper enabled for the environment? (informational; the API doesn't enforce it)
+acmctl env get "$ENV" | jq '{useKeeper, useClickHouseAPIv2}'
+
+# 2. Pick a Keeper node type (scope "zookeeper" is shared by ZooKeeper and Keeper)
+acmctl raw GET "/environment/$ENV/nodetypes?scope=zookeeper" | jq -r '.[].code'
+
+# 3. Launch. keeperOptions creates a dedicated Keeper together with the cluster.
+#    name: keep it short; ha:true => 3 Keeper nodes (use for replicas > 1).
+cat <<'JSON' | acmctl cluster launch "$ENV" | jq '{id, name, status, keeperName, id_zookeeper}'
+{
+  "name": "mycluster", "type": "kubernetes", "role": "dev",
+  "shards": 1, "replicas": 2, "nodes": 2,
+  "nodeType": "m8g.2xlarge", "version": "26.3.33.10001.altinitystable", "memory": 30720,
+  "size": 750, "disks": 1, "storageClass": "gp3-encrypted", "throughput": 125, "iops": 3000,
+  "lbType": "ingress", "secure": true, "zoneAwareness": true,
+  "azlist": ["us-west-2a", "us-west-2b"],
+  "adminUser": "admin", "adminPass": "CHANGE-ME", "mysqlProtocol": false, "uptime": "always",
+  "replicateSchema": false, "sourceCluster": null, "backupSource": null,
+  "keeperOptions": {"name": "mycl-abcd", "instanceType": "t4g.large", "ha": true}
+}
+JSON
+```
+
+Verify it took: the response must have `keeperName` set and `id_zookeeper` null.
+On Kubernetes you should also see a `ClickHouseKeeperInstallation` and the CHI's
+`spec.configuration.zookeeper.nodes` pointing at `keeperclient-<name>-{0,1,2}:2181`,
+with no new `zookeeper-c*` pods.
+
+To reuse an existing Keeper instead, send `"keeperName": "<existing>"` and omit
+`keeperOptions`. (The UI does this when replicating a cluster: it copies the source's
+`keeperName` or `id_zookeeper` into the launch payload; the API itself does not infer it
+from `sourceCluster`.) List Keepers with `GET /environment/{env}/keepers`.
+
+Notes:
+- There is no in-place ZooKeeper -> Keeper switch for a running cluster; relaunch or
+  restore into a new cluster.
+- Don't reuse the same `keeperOptions.name` across clusters; the UI appends a random
+  suffix (`<first 10 chars of cluster name>-<4 random letters>`).
+- Delete a Keeper only after the clusters using it are gone; the API refuses otherwise.
+
 ## Diagnose a slow / failing query
 
 ```bash

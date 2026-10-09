@@ -1,5 +1,7 @@
 # Zookeepers
 
+> For ClickHouse Keeper (the ZooKeeper replacement) see `keepers.md`.
+
 DELETE /zookeeper/{id} — Removes given Zookeeper Cluster from a the environment
 GET /environment/{environment}/zookeepers — Lists available zookeeper clusters [showDedicated]
 GET /zookeeper/{id}/status — Checks out Zookeeper Cluster status
