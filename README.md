@@ -33,7 +33,7 @@ The `altinity-cloud` skill lives in this repo at
 `skills/altinity-cloud/`. Contents:
 
 - `SKILL.md` — setup, common ops, conventions, per-tag index
-- `endpoints/<tag>.md` — 20 per-tag endpoint digests (clusters,
+- `endpoints/<tag>.md` — 21 per-tag endpoint digests (clusters,
   environments, billing, …)
 - `workflows.md` — multi-step recipes (launch-and-wait,
   diagnose-slow-query, …)

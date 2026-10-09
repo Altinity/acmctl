@@ -122,6 +122,7 @@ the tag you need** — each file is a focused 1–4 KB excerpt.
 | DatabaseProfiles | 4 | `endpoints/database-profiles.md` |
 | DatabaseUsers | 6 | `endpoints/database-users.md` |
 | Environments | 40 | `endpoints/environments.md` |
+| Keepers | 5 | `endpoints/keepers.md` |
 | NodeTypes | 4 | `endpoints/node-types.md` |
 | Notifications | 7 | `endpoints/notifications.md` |
 | Organizations | 6 | `endpoints/organizations.md` |
